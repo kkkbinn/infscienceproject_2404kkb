@@ -1,0 +1,15 @@
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 편집기
+.vscode/
+.idea/
+
+# 비밀 키 (6차시 Supabase 연결 때 사용)
+.env
+.env.local
+
+# 배포
+.vercel/
