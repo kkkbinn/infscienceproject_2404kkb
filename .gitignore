@@ -13,3 +13,6 @@ desktop.ini
 
 # 배포
 .vercel/
+
+# Claude Code 로컬 설정 (미리보기 서버)
+.claude/

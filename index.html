@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- lang="ko": 이 문서가 한국어라고 브라우저에 알려 줍니다 -->
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <!-- viewport: 휴대폰에서 화면 너비에 맞춰 표시되게 합니다 (5차시 배포 후 폰 접속용) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오늘 얼마?</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="phone">
+
+    <!-- ============ 상단 : 현재 잔액과 다음 입금일까지 남은 일수 ============ -->
+    <header class="topbar">
+      <div class="topbar-item">
+        <span class="topbar-label">현재 잔액</span>
+        <!-- id를 붙인 곳이 app.js가 숫자를 채워 넣는 자리입니다 -->
+        <strong class="topbar-value" id="balance">―</strong>
+      </div>
+      <div class="topbar-item topbar-item--right">
+        <span class="topbar-label">다음 입금까지</span>
+        <strong class="topbar-value" id="dday">―</strong>
+        <span class="topbar-sub" id="next-income">―</span>
+      </div>
+    </header>
+
+    <main>
+
+      <!-- ============ 중앙 : 오늘의 안전 지출 금액 (가장 크게) ============ -->
+      <section class="today">
+        <p class="today-label">오늘 쓸 수 있는 금액</p>
+        <p class="today-amount" id="safe-amount">―</p>
+        <p class="today-hint">여기까지는 써도 괜찮아요</p>
+      </section>
+
+      <!-- ============ 중단 : 카테고리별 남은 예산 막대 ============ -->
+      <section class="block">
+        <h2 class="block-title">카테고리별 남은 예산</h2>
+        <!-- 비어 있는 이유 : app.js가 카테고리 6개를 반복해서 만들어 넣습니다 -->
+        <ul class="category-list" id="category-list"></ul>
+      </section>
+
+      <!-- ============ 하단 : 원터치 빠른 입력 버튼 ============ -->
+      <section class="block">
+        <h2 class="block-title">빠른 입력</h2>
+        <div class="quick-list" id="quick-list"></div>
+        <p class="note">※ 버튼을 누르면 기록되는 기능은 3차시에 연결합니다.</p>
+      </section>
+
+    </main>
+
+    <!-- ============ 화면 이동 탭 (화면 3개) ============ -->
+    <nav class="tabbar">
+      <span class="tab tab--active">메인</span>
+      <span class="tab tab--todo">지출 입력<em>3차시</em></span>
+      <span class="tab tab--todo">통계<em>5차시</em></span>
+    </nav>
+
+  </div>
+
+  <!-- script를 body 끝에 두는 이유 : 위 HTML이 다 만들어진 뒤에 실행되어야
+       app.js가 id로 자리를 찾을 수 있기 때문입니다 -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+/* ===================================================================
+   오늘 얼마? - 메인 화면 스타일
+   색깔과 크기만 담당합니다. 무엇이 있는지는 index.html, 숫자는 app.js
+   =================================================================== */
+
+/* :root = 문서 전체. 자주 쓰는 색을 이름으로 미리 정해 두면
+   나중에 색을 바꿀 때 이 부분만 고치면 됩니다 */
+:root {
+  --bg:        #f4f5f7;   /* 배경 */
+  --card:      #ffffff;   /* 카드 흰색 */
+  --text:      #1c1d21;   /* 기본 글자 */
+  --muted:     #8a8f98;   /* 흐린 글자 (설명용) */
+  --line:      #e6e8ec;   /* 구분선 */
+  --point:     #2f6bff;   /* 강조 파랑 */
+  --safe:      #2eb872;   /* 여유 있음 (초록) */
+  --warn:      #f2a93b;   /* 주의 (주황) */
+  --danger:    #ef4a4a;   /* 빠듯함 (빨강) */
+}
+
+/* * = 모든 요소. 브라우저마다 다른 기본 여백을 없애 출발점을 맞춥니다 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Pretendard", "Apple SD Gothic Neo", "맑은 고딕",
+               "Malgun Gothic", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 휴대폰 화면 크기를 기준으로 만들고, PC에서는 가운데 정렬합니다 */
+.phone {
+  max-width: 420px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: var(--bg);
+  padding-bottom: 72px;   /* 하단 탭바에 내용이 가리지 않도록 */
+}
+
+/* ---------------- 상단 : 잔액 / D-day ---------------- */
+.topbar {
+  display: flex;                    /* 두 덩어리를 가로로 나란히 */
+  justify-content: space-between;   /* 왼쪽 끝과 오른쪽 끝으로 밀기 */
+  align-items: flex-start;
+  padding: 20px 20px 16px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-item        { display: flex; flex-direction: column; gap: 3px; }
+.topbar-item--right { align-items: flex-end; }
+.topbar-label { font-size: 12px; color: var(--muted); }
+.topbar-value { font-size: 19px; font-weight: 700; }
+.topbar-sub   { font-size: 12px; color: var(--muted); }
+
+/* ---------------- 중앙 : 오늘의 안전 금액 ---------------- */
+/* 이 화면에서 가장 크게 보여야 하는 단 하나의 숫자입니다 */
+.today {
+  background: var(--card);
+  margin: 14px 16px;
+  padding: 30px 20px 26px;
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+.today-label  { font-size: 13px; color: var(--muted); }
+.today-amount {
+  font-size: 46px;         /* 다른 글자보다 훨씬 크게 */
+  font-weight: 800;
+  color: var(--point);
+  letter-spacing: -1.5px;
+  margin: 8px 0 6px;
+}
+.today-hint { font-size: 13px; color: var(--muted); }
+
+/* ---------------- 공통 카드 블록 ---------------- */
+.block {
+  background: var(--card);
+  margin: 14px 16px;
+  padding: 18px 18px 20px;
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+.block-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+
+/* ---------------- 카테고리별 남은 예산 막대 ---------------- */
+.category-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+
+.category-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.category-name { font-weight: 600; }
+.category-left { color: var(--muted); font-size: 12px; }
+
+/* 막대의 회색 바탕(전체 예산) */
+.bar {
+  height: 9px;
+  background: var(--line);
+  border-radius: 99px;
+  overflow: hidden;    /* 안쪽 막대가 둥근 모서리를 넘지 않게 */
+}
+/* 실제로 채워지는 부분(쓴 금액). 너비 %는 app.js가 정합니다 */
+.bar-fill { height: 100%; border-radius: 99px; }
+
+/* 소진율에 따라 색이 달라집니다 - "빠듯한 항목은 색으로 구분" */
+.bar-fill--safe   { background: var(--safe); }
+.bar-fill--warn   { background: var(--warn); }
+.bar-fill--danger { background: var(--danger); }
+
+/* ---------------- 빠른 입력 버튼 ---------------- */
+.quick-list { display: flex; gap: 8px; }
+.quick-btn {
+  flex: 1;                       /* 세 버튼이 가로를 똑같이 나눠 가짐 */
+  padding: 12px 6px;
+  background: #f2f4f8;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: 3px; align-items: center;
+}
+.quick-btn-name  { font-size: 13px; font-weight: 600; }
+.quick-btn-price { font-size: 12px; color: var(--muted); }
+
+.note { margin-top: 12px; font-size: 11px; color: var(--muted); }
+
+/* ---------------- 하단 탭바 ---------------- */
+.tabbar {
+  position: fixed;      /* 스크롤해도 화면 아래에 붙어 있음 */
+  bottom: 0;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+}
+.tab {
+  flex: 1;
+  padding: 14px 0 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.tab--active { color: var(--point); font-weight: 700; }
+.tab--todo   { opacity: 0.45; }
+/* em = 아직 안 만든 화면임을 표시하는 작은 꼬리표 */
+.tab--todo em {
+  display: block;
+  font-style: normal;
+  font-size: 10px;
+  margin-top: 2px;
+}
