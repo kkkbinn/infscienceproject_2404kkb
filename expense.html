@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>지출 입력 · 불규칙 수입 대학생을 위한 지출 관리 서비스</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="phone">
+
+    <header class="pagebar">
+      <h1 class="pagebar-title">지출 입력</h1>
+      <p class="pagebar-sub">금액 → 카테고리 → 저장, 세 단계면 끝납니다</p>
+    </header>
+
+    <main>
+
+      <!-- ============ 빠른 입력 : 버튼 한 번으로 기록 끝 ============ -->
+      <section class="block">
+        <h2 class="block-title">빠른 입력</h2>
+        <div class="quick-list" id="quick-list"></div>
+        <p class="note">자주 쓰는 항목은 버튼만 누르면 아래 목록에 바로 추가됩니다.</p>
+      </section>
+
+      <!-- ============ 직접 입력 폼 ============ -->
+      <section class="block">
+        <h2 class="block-title">직접 입력</h2>
+
+        <!-- form : 입력칸을 묶어 주는 태그. 저장을 누르면 submit 이 일어납니다 -->
+        <form id="expense-form">
+
+          <div class="field">
+            <label class="field-label" for="amount">금액</label>
+            <!-- type="number" 를 쓰면 휴대폰에서 숫자 자판이 먼저 뜹니다 -->
+            <input class="field-input" type="number" id="amount"
+                   placeholder="12000" min="1" required>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="category">카테고리</label>
+            <!-- select 안의 option 6개는 expense.js 가 만들어 넣습니다 -->
+            <select class="field-input" id="category" required></select>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="date">날짜</label>
+            <!-- 기본값(오늘 날짜)은 expense.js 가 채웁니다 -->
+            <input class="field-input" type="date" id="date" required>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="memo">메모 <span class="field-hint">(선택)</span></label>
+            <input class="field-input" type="text" id="memo"
+                   placeholder="학식, 친구 생일 모임 …" maxlength="30">
+          </div>
+
+          <!-- 금액을 비우고 누르면 여기에 안내가 나옵니다 -->
+          <p class="form-error" id="form-error" hidden></p>
+
+          <button class="save-btn" type="submit">저장</button>
+        </form>
+      </section>
+
+      <!-- ============ 기록된 목록 ============ -->
+      <section class="block">
+        <h2 class="block-title">
+          오늘 기록한 지출
+          <span class="block-count" id="record-summary">0건</span>
+        </h2>
+        <ul class="record-list" id="record-list"></ul>
+        <p class="note">※ 지금은 새로고침하면 목록이 사라집니다. 서버에 저장하는 기능은 8차시에 만듭니다.</p>
+      </section>
+
+    </main>
+
+    <nav class="tabbar">
+      <a class="tab" href="index.html">메인</a>
+      <span class="tab tab--active">지출 입력</span>
+      <span class="tab tab--todo">통계<em>5차시</em></span>
+    </nav>
+
+  </div>
+
+  <script src="expense.js"></script>
+</body>
+</html>

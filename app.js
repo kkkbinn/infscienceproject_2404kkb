@@ -119,7 +119,10 @@ function 빠른입력그리기() {
       <span class="quick-btn-name">${항목.이름}</span>
       <span class="quick-btn-price">${원(항목.금액)}</span>
     `;
-    // 누르면 실제로 기록되는 기능은 3차시에 여기에 넣습니다
+    // 누르면 지출 입력 화면으로 이동합니다 (3차시)
+    button.addEventListener("click", function () {
+      location.href = "expense.html";
+    });
     목록.appendChild(button);
   });
 }
