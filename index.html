@@ -32,7 +32,30 @@
       <section class="today">
         <p class="today-label">오늘 쓸 수 있는 금액</p>
         <p class="today-amount" id="safe-amount">―</p>
-        <p class="today-hint">여기까지는 써도 괜찮아요</p>
+        <p class="today-hint" id="today-hint">여기까지는 써도 괜찮아요</p>
+        <!-- 계산 과정을 한 줄로 보여 줍니다. 손 검산과 비교하기 위해서 (4차시) -->
+        <p class="today-formula" id="today-formula"></p>
+      </section>
+
+      <!-- ============ 계산에 쓰는 값 입력 (4차시) ============ -->
+      <!-- 여기 값을 바꾸면 위의 '오늘 쓸 수 있는 금액'이 바로 다시 계산됩니다 -->
+      <section class="block">
+        <h2 class="block-title">내 돈 정보</h2>
+
+        <div class="field">
+          <label class="field-label" for="input-balance">현재 잔액 (통장 + 현금)</label>
+          <input class="field-input" type="number" id="input-balance" min="0" placeholder="312000">
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="input-income-date">다음 입금 예정일</label>
+          <input class="field-input" type="date" id="input-income-date">
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="input-fixed">입금일까지 나갈 고정지출 합계 <span class="field-hint">(통신비·구독료 등)</span></label>
+          <input class="field-input" type="number" id="input-fixed" min="0" placeholder="0">
+        </div>
       </section>
 
       <!-- ============ 중단 : 카테고리별 남은 예산 막대 ============ -->

@@ -71,6 +71,8 @@ body {
   margin: 8px 0 6px;
 }
 .today-hint { font-size: 13px; color: var(--muted); }
+/* 계산 과정 한 줄 (4차시) - 손 검산과 비교하는 용도라 작게 */
+.today-formula { font-size: 11px; color: var(--muted); margin-top: 10px; }
 
 /* ---------------- 공통 카드 블록 ---------------- */
 .block {
