@@ -319,6 +319,9 @@ body {
   color: var(--muted);
 }
 .legend li { display: flex; align-items: center; gap: 5px; }
+/* display 를 지정하면 브라우저 기본 [hidden] 규칙을 덮어써서
+   hidden 을 걸어도 계속 보입니다. 그래서 여기서 다시 숨겨 줍니다. */
+.legend li[hidden] { display: none; }
 .legend-dot { width: 9px; height: 9px; border-radius: 99px; display: inline-block; }
 .legend-dot--line   { background: var(--point); }
 .legend-dot--zero   { background: var(--danger); }
