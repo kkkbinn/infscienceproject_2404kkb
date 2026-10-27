@@ -32,6 +32,16 @@ function 영원그리기() {
   const 안내칸 = document.getElementById("zero-hint");
   const 식칸 = document.getElementById("zero-formula");
 
+  /* 잔액을 아직 안 넣었으면 계산이 성립하지 않습니다.
+     이 경우 0원을 0으로 나눠 '오늘 0원이 된다'는 엉뚱한 답이 나오므로
+     계산하지 말고 무엇을 해야 하는지 알려 줍니다. */
+  if (!(내돈.잔액 > 0)) {
+    날짜칸.textContent = "―";
+    안내칸.textContent = "메인 화면에서 현재 잔액을 먼저 입력해 주세요";
+    식칸.textContent = "잔액을 넣어야 며칠 뒤에 0원이 되는지 계산할 수 있습니다";
+    return;
+  }
+
   const 일수 = 영원예상일수();
 
   if (일수 === null) {
@@ -69,7 +79,11 @@ function 꺾은선그리기() {
   const 범위칸 = document.getElementById("chart-range");
 
   if (하루평균 <= 0 || 내돈.잔액 <= 0) {
-    자리.innerHTML = `<p class="chart-empty">지출을 기록하면 여기에 잔액 예측 그래프가 그려집니다.</p>`;
+    // 왜 못 그리는지 이유를 정확히 알려 줍니다
+    const 이유 = !(내돈.잔액 > 0)
+      ? "메인 화면에서 현재 잔액을 입력하면 여기에 잔액 예측 그래프가 그려집니다."
+      : "지출을 기록하면 여기에 잔액 예측 그래프가 그려집니다.";
+    자리.innerHTML = `<p class="chart-empty">${이유}</p>`;
     범위칸.textContent = "―";
     document.getElementById("legend-zero").hidden = true;
     document.getElementById("legend-income").hidden = true;
