@@ -6,7 +6,7 @@
   <!-- viewport: 휴대폰에서 화면 너비에 맞춰 표시되게 합니다 (5차시 배포 후 폰 접속용) -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>불규칙 수입 대학생을 위한 지출 관리 서비스</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -60,7 +60,7 @@
 
       <!-- ============ 중단 : 카테고리별 남은 예산 막대 ============ -->
       <section class="block">
-        <h2 class="block-title">카테고리별 남은 예산</h2>
+        <h2 class="block-title">카테고리별 남은 예산 <span class="block-count" id="category-summary"></span></h2>
         <!-- 비어 있는 이유 : app.js가 카테고리 6개를 반복해서 만들어 넣습니다 -->
         <ul class="category-list" id="category-list"></ul>
       </section>
@@ -78,13 +78,14 @@
     <nav class="tabbar">
       <span class="tab tab--active">메인</span>
       <a class="tab" href="expense.html">지출 입력</a>
-      <span class="tab tab--todo">통계<em>5차시</em></span>
+      <a class="tab" href="stats.html">통계</a>
     </nav>
 
   </div>
 
   <!-- script를 body 끝에 두는 이유 : 위 HTML이 다 만들어진 뒤에 실행되어야
        app.js가 id로 자리를 찾을 수 있기 때문입니다 -->
-  <script src="app.js"></script>
+  <script src="storage.js?v=6"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

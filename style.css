@@ -275,3 +275,85 @@ body {
   border-color: var(--danger);
   color: var(--danger);
 }
+
+/* ===================================================================
+   통계 화면 (5차시)
+   =================================================================== */
+
+/* 0원 예상일은 금액보다 글자가 길어서 조금 작게 */
+.today-amount--sm { font-size: 34px; }
+
+.chart-wrap { width: 100%; }
+
+/* SVG 는 viewBox 안에서 계산하고, 실제 크기는 여기서 정합니다 */
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+
+.chart .grid   { stroke: var(--line); stroke-width: 1; }
+.chart .axis   { fill: var(--muted); font-size: 9px; }
+.chart .line   { fill: none; stroke: var(--point); stroke-width: 2.5;
+                 stroke-linejoin: round; stroke-linecap: round; }
+.chart .area   { fill: var(--point); opacity: 0.10; }
+
+/* 0원이 되는 날 / 다음 입금일 표시선 (stroke-dasharray = 점선) */
+.chart .mark          { stroke-width: 1.5; stroke-dasharray: 3 3; }
+.chart .mark--zero    { stroke: var(--danger); }
+.chart .mark--income  { stroke: var(--safe); }
+.chart .dot--zero     { fill: var(--danger); }
+
+.chart-empty {
+  padding: 26px 10px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ---------------- 범례 ---------------- */
+.legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.legend li { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 9px; height: 9px; border-radius: 99px; display: inline-block; }
+.legend-dot--line   { background: var(--point); }
+.legend-dot--zero   { background: var(--danger); }
+.legend-dot--income { background: var(--safe); }
+
+/* ---------------- 최근 7일 막대 ---------------- */
+.wbar-list {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  height: 150px;
+}
+.wbar {
+  flex: 1;                       /* 7개가 가로를 똑같이 나눠 가짐 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+.wbar-value { font-size: 10px; color: var(--muted); height: 12px; }
+/* track = 회색 배경(하루 최대치), fill = 실제 쓴 만큼 */
+.wbar-track {
+  flex: 1;
+  width: 100%;
+  background: #f2f4f8;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-end;         /* 막대가 아래에서 위로 자라게 */
+  overflow: hidden;
+}
+.wbar-fill {
+  width: 100%;
+  background: var(--point);
+  border-radius: 6px;
+  min-height: 2px;
+}
+.wbar-day { font-size: 11px; color: var(--muted); }
