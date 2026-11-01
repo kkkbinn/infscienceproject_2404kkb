@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 · 불규칙 수입 대학생을 위한 지출 관리 서비스</title>
+  <link rel="stylesheet" href="style.css?v=9">
+</head>
+<body>
+
+  <div class="phone">
+    <main class="login-wrap">
+
+      <section class="login-head">
+        <h1 class="login-title">불규칙 수입 대학생을 위한<br>지출 관리 서비스</h1>
+        <p class="login-sub">다음 입금일까지 하루에 얼마씩 쓸 수 있는지 알려 줍니다</p>
+      </section>
+
+      <section class="block">
+        <!-- 로그인과 회원가입을 한 폼으로 쓰고, 누른 버튼에 따라 나뉩니다 -->
+        <form id="login-form">
+          <div class="field">
+            <label class="field-label" for="email">이메일</label>
+            <input class="field-input" type="email" id="email"
+                   placeholder="test@example.com" autocomplete="username" required>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="password">비밀번호 <span class="field-hint">(6자 이상)</span></label>
+            <input class="field-input" type="password" id="password"
+                   placeholder="••••••" minlength="6" autocomplete="current-password" required>
+          </div>
+
+          <p class="form-error" id="login-error" hidden></p>
+          <p class="form-ok" id="login-ok" hidden></p>
+
+          <button class="save-btn" type="submit" id="login-btn">로그인</button>
+          <button class="sub-btn" type="button" id="signup-btn">처음이에요 · 회원가입</button>
+        </form>
+
+        <p class="note">
+          금액은 민감한 정보라 Supabase의 RLS(행 수준 보안)를 켜 두었습니다.
+          로그인한 본인의 기록만 저장되고 조회됩니다.
+        </p>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase.js?v=9"></script>
+  <script src="login.js?v=9"></script>
+</body>
+</html>

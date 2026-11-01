@@ -4,11 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>지출 입력 · 불규칙 수입 대학생을 위한 지출 관리 서비스</title>
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 
   <div class="phone">
+
+    <div class="user-bar" id="user-bar"></div>
 
     <header class="pagebar">
       <h1 class="pagebar-title">지출 입력</h1>
@@ -59,7 +61,7 @@
           <!-- 금액을 비우고 누르면 여기에 안내가 나옵니다 -->
           <p class="form-error" id="form-error" hidden></p>
 
-          <button class="save-btn" type="submit">저장</button>
+          <button class="save-btn" type="submit" id="save-btn">저장</button>
         </form>
       </section>
 
@@ -70,8 +72,8 @@
           <span class="block-count" id="record-summary">0건</span>
         </h2>
         <ul class="record-list" id="record-list"></ul>
-        <p class="note" id="storage-warning" hidden>※ 이 브라우저에서는 저장이 되지 않아 새로고침하면 사라집니다.</p>
-        <p class="note">※ 기록은 이 브라우저에만 저장됩니다. 다른 기기에서도 보이게 하려면 Supabase 연동이 필요합니다.</p>
+        <p class="note form-error" id="storage-warning" hidden>※ 서버에 저장하지 못했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.</p>
+        <p class="note">※ 기록은 Supabase 데이터베이스에 저장됩니다. RLS를 켜 두어 로그인한 본인의 기록만 조회됩니다.</p>
       </section>
 
     </main>
@@ -84,7 +86,9 @@
 
   </div>
 
-  <script src="storage.js?v=8"></script>
-  <script src="expense.js?v=8"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase.js?v=9"></script>
+  <script src="storage.js?v=9"></script>
+  <script src="expense.js?v=9"></script>
 </body>
 </html>

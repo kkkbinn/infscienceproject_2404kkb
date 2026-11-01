@@ -360,3 +360,69 @@ body {
   min-height: 2px;
 }
 .wbar-day { font-size: 11px; color: var(--muted); }
+
+/* ===================================================================
+   로그인 / 사용자 띠 (6차시 · Supabase)
+   =================================================================== */
+
+/* 화면 맨 위의 "누구로 로그인했는지 + 로그아웃" 띠 */
+.user-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: #eef2fb;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  min-height: 36px;
+}
+.user-bar-email {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.user-bar-logout {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.user-bar-logout:hover { border-color: var(--point); color: var(--point); }
+
+/* ---------------- 로그인 화면 ---------------- */
+.login-wrap { padding-top: 40px; }
+.login-head { padding: 0 20px 6px; text-align: center; }
+.login-title { font-size: 21px; font-weight: 800; line-height: 1.45; }
+.login-sub   { margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+/* 회원가입 버튼 (저장 버튼보다 덜 강조) */
+.sub-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 8px;
+  background: transparent;
+  color: var(--point);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.sub-btn:hover { border-color: var(--point); }
+
+/* 성공·진행 안내 (오류는 빨강, 이건 파랑) */
+.form-ok {
+  font-size: 12px;
+  color: var(--point);
+  margin: -4px 0 10px;
+}
+
+/* 저장 중에는 버튼을 눌러도 반응하지 않게 */
+.save-btn:disabled, .quick-btn:disabled { opacity: 0.5; cursor: default; }
