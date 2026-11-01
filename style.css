@@ -426,3 +426,52 @@ body {
 
 /* 저장 중에는 버튼을 눌러도 반응하지 않게 */
 .save-btn:disabled, .quick-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* 오늘 이미 쓴 돈 (중앙 카드 맨 아래) */
+.today-spent {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* 기준을 넘겼을 때는 숫자를 빨갛게. 문구가 아니라 색과 숫자로만 알립니다 */
+.today-amount--over { color: var(--danger); }
+
+/* 입력칸 두 개를 한 줄에 나란히 (무슨 돈 / 얼마) */
+.field-row { display: flex; gap: 10px; }
+.field-col { flex: 1; min-width: 0; }
+
+/* 처음 설정 화면의 미리보기 */
+.setup-preview {
+  margin: 4px 0 14px;
+  padding: 14px;
+  background: #f4f7ff;
+  border: 1px solid #dde6ff;
+  border-radius: 12px;
+  text-align: center;
+}
+.setup-preview-label   { font-size: 11px; color: var(--muted); }
+.setup-preview-amount  { font-size: 26px; font-weight: 800; color: var(--point); margin: 4px 0 2px; }
+.setup-preview-formula { font-size: 11px; color: var(--muted); }
+
+/* 지출 입력 화면 맨 위의 '오늘 한도' 띠 */
+.limit-strip {
+  margin: 14px 16px 0;
+  padding: 12px 14px;
+  background: #eef4ff;
+  border: 1px solid #dbe6ff;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--point);
+  text-align: center;
+  line-height: 1.5;
+}
+/* 기준을 넘기면 색만 바뀝니다 (문구로 혼내지 않음) */
+.limit-strip--over {
+  background: #fff1f1;
+  border-color: #ffd8d8;
+  color: var(--danger);
+}

@@ -6,7 +6,7 @@
   <!-- viewport: 휴대폰에서 화면 너비에 맞춰 표시되게 합니다 (5차시 배포 후 폰 접속용) -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>불규칙 수입 대학생을 위한 지출 관리 서비스</title>
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 
@@ -32,9 +32,11 @@
 
       <!-- ============ 중앙 : 오늘의 안전 지출 금액 (가장 크게) ============ -->
       <section class="today">
-        <p class="today-label">오늘 쓸 수 있는 금액</p>
+        <p class="today-label" id="today-label">오늘 쓸 수 있는 금액</p>
         <p class="today-amount" id="safe-amount">―</p>
         <p class="today-hint" id="today-hint">여기까지는 써도 괜찮아요</p>
+        <!-- 오늘 이미 쓴 돈. 이게 있어야 '어제 쓴 만큼 오늘이 줄어든다'가 보입니다 -->
+        <p class="today-spent" id="today-spent"></p>
         <!-- 계산 과정을 한 줄로 보여 줍니다. 손 검산과 비교하기 위해서 (4차시) -->
         <p class="today-formula" id="today-formula"></p>
       </section>
@@ -52,6 +54,22 @@
         <div class="field">
           <label class="field-label" for="input-income-date">다음 입금 예정일</label>
           <input class="field-input" type="date" id="input-income-date">
+        </div>
+
+        <div class="field field-row">
+          <div class="field-col">
+            <label class="field-label" for="input-income-type">무슨 돈인가요</label>
+            <select class="field-input" id="input-income-type">
+              <option value="알바비">알바비</option>
+              <option value="용돈">용돈</option>
+              <option value="과외비">과외비</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+          <div class="field-col">
+            <label class="field-label" for="input-income-amount">들어올 금액</label>
+            <input class="field-input" type="number" id="input-income-amount" min="0" placeholder="478000">
+          </div>
         </div>
 
         <div class="field">
@@ -88,8 +106,8 @@
   <!-- script를 body 끝에 두는 이유 : 위 HTML이 다 만들어진 뒤에 실행되어야
        app.js가 id로 자리를 찾을 수 있기 때문입니다 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase.js?v=9"></script>
-  <script src="storage.js?v=9"></script>
-  <script src="app.js?v=9"></script>
+  <script src="supabase.js?v=11"></script>
+  <script src="storage.js?v=11"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>

@@ -74,7 +74,7 @@ const 저장소 = (function () {
     내돈정보읽기: async function () {
       const { data, error } = await sb
         .from("money_info")
-        .select("balance, next_income_date, fixed_cost")
+        .select("balance, next_income_date, fixed_cost, income_type, income_amount")
         .maybeSingle();            // 없으면 null (오류 아님)
 
       if (error) { console.error("내 돈 정보 불러오기 실패", error); return null; }
@@ -83,7 +83,9 @@ const 저장소 = (function () {
       return {
         잔액: data.balance,
         고정지출: data.fixed_cost,
-        입금일: data.next_income_date || ""
+        입금일: data.next_income_date || "",
+        수입종류: data.income_type || "",
+        수입금액: data.income_amount || 0
       };
     },
 
@@ -98,6 +100,8 @@ const 저장소 = (function () {
         balance: 정보.잔액 || 0,
         fixed_cost: 정보.고정지출 || 0,
         next_income_date: 정보.입금일 || null,
+        income_type: 정보.수입종류 || null,
+        income_amount: 정보.수입금액 || 0,
         updated_at: new Date().toISOString()
       }, { onConflict: "user_id" });
 
@@ -213,6 +217,16 @@ function 하루평균지출(목록, 일수) {
     if (d >= 기준 && d <= 오늘0시()) 합 += 항목.금액;
   });
   return 합 / 일수;
+}
+
+/* 어떤 날짜에 쓴 돈의 합.
+   계획서의 '어제 쓴 만큼 오늘이 줄어든다'를 만들려면 이 값이 필요합니다. */
+function 그날쓴금액(목록, 날짜글자값) {
+  let 합 = 0;
+  목록.forEach(function (항목) {
+    if (항목.날짜 === 날짜글자값) 합 += 항목.금액;
+  });
+  return 합;
 }
 
 // 소진율에 따른 막대 색 (빠듯한 항목은 색으로 구분)

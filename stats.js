@@ -53,7 +53,11 @@ function 영원그리기() {
   }
 
   const 그날 = new Date(오늘0시().getTime() + 일수 * 하루밀리초);
-  날짜칸.textContent = (그날.getMonth() + 1) + "월 " + 그날.getDate() + "일";
+  /* 해가 바뀌면 연도까지 보여 줍니다.
+     안 그러면 내년 10월 3일이 "10월 3일"로 나와 지난 날짜처럼 보입니다. */
+  const 해바뀜 = 그날.getFullYear() !== 오늘0시().getFullYear();
+  날짜칸.textContent = (해바뀜 ? 그날.getFullYear() + "년 " : "")
+                     + (그날.getMonth() + 1) + "월 " + 그날.getDate() + "일";
 
   // 경고 대신 사실만 (설계 원칙 1·2)
   if (남은일수 > 0 && 일수 < 남은일수) {

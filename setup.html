@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>처음 설정 · 불규칙 수입 대학생을 위한 지출 관리 서비스</title>
+  <link rel="stylesheet" href="style.css?v=11">
+</head>
+<body>
+
+  <div class="phone">
+
+    <div class="user-bar" id="user-bar"></div>
+
+    <header class="pagebar">
+      <h1 class="pagebar-title">처음 설정</h1>
+      <p class="pagebar-sub">네 가지만 넣으면 오늘 쓸 수 있는 금액이 바로 계산됩니다</p>
+    </header>
+
+    <main>
+      <section class="block">
+        <form id="setup-form">
+
+          <div class="field">
+            <label class="field-label" for="s-balance">1. 지금 가진 돈 <span class="field-hint">(통장 + 현금)</span></label>
+            <input class="field-input" type="number" id="s-balance" min="0" placeholder="312000" required>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="s-date">2. 다음에 돈이 들어오는 날</label>
+            <input class="field-input" type="date" id="s-date" required>
+          </div>
+
+          <div class="field field-row">
+            <div class="field-col">
+              <label class="field-label" for="s-income-type">3. 무슨 돈인가요</label>
+              <select class="field-input" id="s-income-type">
+                <option value="알바비">알바비</option>
+                <option value="용돈">용돈</option>
+                <option value="과외비">과외비</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div class="field-col">
+              <label class="field-label" for="s-income-amount">얼마쯤</label>
+              <input class="field-input" type="number" id="s-income-amount" min="0" placeholder="478000">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="s-fixed">4. 그날까지 빠져나갈 고정지출 <span class="field-hint">(통신비·구독료 등)</span></label>
+            <input class="field-input" type="number" id="s-fixed" min="0" placeholder="200400" required>
+          </div>
+
+          <!-- 넣는 즉시 결과를 미리 보여 줍니다 -->
+          <div class="setup-preview">
+            <p class="setup-preview-label">이렇게 됩니다</p>
+            <p class="setup-preview-amount" id="s-preview">―</p>
+            <p class="setup-preview-formula" id="s-formula"></p>
+          </div>
+
+          <p class="form-error" id="s-error" hidden></p>
+          <button class="save-btn" type="submit" id="s-save">시작하기</button>
+        </form>
+
+        <p class="note">나중에 메인 화면에서 언제든 바꿀 수 있습니다.</p>
+      </section>
+    </main>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="supabase.js?v=11"></script>
+  <script src="storage.js?v=11"></script>
+  <script src="setup.js?v=11"></script>
+</body>
+</html>
