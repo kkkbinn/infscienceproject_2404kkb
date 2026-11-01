@@ -71,4 +71,10 @@ document.getElementById("setup-form").addEventListener("submit", async function 
   d.setDate(d.getDate() + 9);
   document.getElementById("s-date").value = 날짜글자(d);
   미리보기();
+
+  /* 브라우저가 전에 입력했던 값을 되살리는 일이 있는데,
+     그게 위 미리보기보다 늦게 일어나 '―' 로 남을 수 있습니다.
+     조금 뒤에 한 번 더 계산해 줍니다. */
+  setTimeout(미리보기, 300);
+  window.addEventListener("pageshow", 미리보기);
 })();
