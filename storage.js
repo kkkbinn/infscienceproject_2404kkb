@@ -36,7 +36,7 @@ const 저장소 = (function () {
     지출목록읽기: async function () {
       const { data, error } = await sb
         .from("expenses")
-        .select("id, amount, category, spent_on, memo")
+        .select("id, amount, category, spent_on, memo, created_at")
         .order("spent_on", { ascending: true })
         .order("id", { ascending: true });
 
@@ -46,7 +46,8 @@ const 저장소 = (function () {
       return data.map(function (r) {
         return {
           번호: r.id, 금액: r.amount, 카테고리: r.category,
-          날짜: r.spent_on, 메모: r.memo || ""
+          날짜: r.spent_on, 메모: r.memo || "",
+          기록시각: r.created_at          // 잔액을 입력한 뒤에 쓴 돈인지 가리는 데 씁니다
         };
       });
     },
@@ -74,7 +75,7 @@ const 저장소 = (function () {
     내돈정보읽기: async function () {
       const { data, error } = await sb
         .from("money_info")
-        .select("balance, next_income_date, fixed_cost, income_type, income_amount")
+        .select("balance, next_income_date, fixed_cost, income_type, income_amount, updated_at")
         .maybeSingle();            // 없으면 null (오류 아님)
 
       if (error) { console.error("내 돈 정보 불러오기 실패", error); return null; }
@@ -85,7 +86,8 @@ const 저장소 = (function () {
         고정지출: data.fixed_cost,
         입금일: data.next_income_date || "",
         수입종류: data.income_type || "",
-        수입금액: data.income_amount || 0
+        수입금액: data.income_amount || 0,
+        입력시각: data.updated_at          // 이 시각 이후에 쓴 돈을 잔액에서 뺍니다
       };
     },
 
@@ -127,6 +129,49 @@ const 저장소 = (function () {
         if (결과[c] === undefined) 결과[c] = 기본예산[c];
       });
       return 결과;
+    },
+
+    /* ---------------- 고정지출 (항목별) ---------------- */
+
+    고정지출읽기: async function () {
+      const { data, error } = await sb
+        .from("fixed_costs")
+        .select("id, name, amount, pay_day")
+        .order("pay_day", { ascending: true, nullsFirst: false })
+        .order("id", { ascending: true });
+
+      // 표 자체가 없을 때와 '표는 있는데 비었을 때'를 구별해야 하므로
+      // 오류일 때는 빈 배열이 아니라 null 을 돌려줍니다.
+      if (error) { console.error("고정지출 불러오기 실패", error); return null; }
+      return data.map(function (r) {
+        return { 번호: r.id, 이름: r.name, 금액: r.amount, 결제일: r.pay_day };
+      });
+    },
+
+    /* 예전에는 고정지출을 '합계 한 칸'으로만 저장했습니다.
+       그 값이 남아 있는데 표가 비어 있으면, 한 줄로 옮겨 줍니다.
+       이렇게 하지 않으면 예전에 넣어 둔 금액이 0으로 사라집니다. */
+    고정지출옮기기: async function (옛합계) {
+      if (!(옛합계 > 0)) return [];
+      const id = await 저장소.고정지출추가("기존 고정지출", 옛합계, null);
+      if (id === null) return [];
+      return [{ 번호: id, 이름: "기존 고정지출", 금액: 옛합계, 결제일: null }];
+    },
+
+    고정지출추가: async function (이름, 금액, 결제일) {
+      const { data, error } = await sb
+        .from("fixed_costs")
+        .insert({ name: 이름, amount: 금액, pay_day: 결제일 || null })
+        .select("id")
+        .single();
+      if (error) { console.error("고정지출 저장 실패", error); return null; }
+      return data.id;
+    },
+
+    고정지출삭제: async function (번호) {
+      const { error } = await sb.from("fixed_costs").delete().eq("id", 번호);
+      if (error) { console.error("고정지출 삭제 실패", error); return false; }
+      return true;
     },
 
     예산초기화: async function () {
@@ -225,6 +270,26 @@ function 그날쓴금액(목록, 날짜글자값) {
   let 합 = 0;
   목록.forEach(function (항목) {
     if (항목.날짜 === 날짜글자값) 합 += 항목.금액;
+  });
+  return 합;
+}
+
+/* 잔액을 입력한 시각(기준시각) 이후에 쓴 돈의 합.
+
+   ★ 왜 필요한가
+     사용자가 '현재 잔액 312,000원'이라고 적은 뒤에 6,500원을 쓰면
+     실제 잔액은 305,500원이다. 그런데 입력한 숫자만 보면 312,000원 그대로라서,
+     다음 날이 되면 남은 일수만 줄어 한도가 오히려 올라가는 모순이 생긴다.
+     그래서 '적은 뒤에 쓴 돈'을 빼서 진짜 잔액을 구한다.
+
+   날짜(spent_on)가 아니라 기록 시각(created_at)으로 가르는 이유는,
+   과거 날짜로 입력한 지출도 '적은 뒤에 쓴 돈'이면 빼야 하기 때문이다. */
+function 기준이후쓴돈(목록, 기준시각) {
+  if (!기준시각) return 0;
+  const 기준 = new Date(기준시각).getTime();
+  let 합 = 0;
+  목록.forEach(function (항목) {
+    if (항목.기록시각 && new Date(항목.기록시각).getTime() > 기준) 합 += 항목.금액;
   });
   return 합;
 }

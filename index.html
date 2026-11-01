@@ -6,7 +6,7 @@
   <!-- viewport: 휴대폰에서 화면 너비에 맞춰 표시되게 합니다 (5차시 배포 후 폰 접속용) -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>불규칙 수입 대학생을 위한 지출 관리 서비스</title>
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 
@@ -72,10 +72,31 @@
           </div>
         </div>
 
-        <div class="field">
-          <label class="field-label" for="input-fixed">입금일까지 나갈 고정지출 합계 <span class="field-hint">(통신비·구독료 등)</span></label>
-          <input class="field-input" type="number" id="input-fixed" min="0" placeholder="0">
-        </div>
+        <!-- 합계는 아래 고정지출 목록에서 자동으로 계산됩니다 -->
+        <input type="hidden" id="input-fixed" value="0">
+
+        <p class="balance-note" id="balance-note"></p>
+      </section>
+
+      <!-- ============ 고정지출 (항목별) ============ -->
+      <section class="block">
+        <h2 class="block-title">
+          고정지출
+          <span class="block-count" id="fixed-total">0건</span>
+        </h2>
+
+        <ul class="record-list" id="fixed-list"></ul>
+
+        <form id="fixed-form" class="fixed-form">
+          <input class="field-input fixed-name" type="text" id="fixed-name"
+                 placeholder="통신비" maxlength="20">
+          <input class="field-input fixed-amount" type="number" id="fixed-amount"
+                 placeholder="55000" min="1">
+          <input class="field-input fixed-day" type="number" id="fixed-day"
+                 placeholder="25일" min="1" max="31">
+          <button class="fixed-add" type="submit">추가</button>
+        </form>
+        <p class="note">통신비·구독료·교통 정기권처럼 매달 빠져나가는 돈입니다. 합계가 '오늘의 기준' 계산에서 먼저 빠집니다.</p>
       </section>
 
       <!-- ============ 중단 : 카테고리별 남은 예산 막대 ============ -->
@@ -89,7 +110,7 @@
       <section class="block">
         <h2 class="block-title">빠른 입력</h2>
         <div class="quick-list" id="quick-list"></div>
-        <p class="note">버튼을 누르면 지출 입력 화면으로 이동해 바로 기록할 수 있습니다.</p>
+        <p class="note">버튼 한 번이면 이 화면에서 바로 기록되고, 위의 금액이 즉시 줄어듭니다.</p>
       </section>
 
     </main>
@@ -101,13 +122,16 @@
       <a class="tab" href="stats.html">통계</a>
     </nav>
 
+    <!-- 기록했을 때 짧게 떴다 사라지는 알림 -->
+    <div class="toast" id="toast" hidden></div>
+
   </div>
 
   <!-- script를 body 끝에 두는 이유 : 위 HTML이 다 만들어진 뒤에 실행되어야
        app.js가 id로 자리를 찾을 수 있기 때문입니다 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase.js?v=11"></script>
-  <script src="storage.js?v=11"></script>
-  <script src="app.js?v=11"></script>
+  <script src="supabase.js?v=15"></script>
+  <script src="storage.js?v=15"></script>
+  <script src="app.js?v=15"></script>
 </body>
 </html>

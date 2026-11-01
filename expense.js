@@ -93,6 +93,9 @@ function 목록그리기() {
     삭제버튼.textContent = "삭제";
     삭제버튼.setAttribute("aria-label", 항목.카테고리 + " " + 원(항목.금액) + " 기록 삭제");
     삭제버튼.addEventListener("click", function () {
+      // 잘못 눌러 기록이 사라지지 않도록 한 번 확인합니다
+      const 설명 = 항목.카테고리 + " " + 원(항목.금액) + (항목.메모 ? " (" + 항목.메모 + ")" : "");
+      if (!confirm(설명 + " 기록을 지울까요?")) return;
       지출삭제(항목.번호);
     });
     li.appendChild(삭제버튼);
