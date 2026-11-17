@@ -732,3 +732,75 @@ body {
   border-radius: 99px;
   transition: width 0.3s ease;
 }
+
+/* ===================================================================
+   기록 검색·필터 (1514 조호준)
+   =================================================================== */
+
+.filter-box {
+  margin-bottom: 12px;
+  padding: 11px;
+  background: #f7f8fa;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-row + .filter-row { margin-top: 7px; }
+.filter-box .field-input { padding: 8px 10px; font-size: 12.5px; }
+.filter-text { flex: 1.6; min-width: 0; }
+.filter-cat  { flex: 1.1; min-width: 0; }
+.filter-date { flex: 1; min-width: 0; }
+.filter-tilde { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.filter-reset {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 11.5px;
+  font-family: inherit;
+  color: var(--muted);
+  cursor: pointer;
+}
+.filter-reset:hover { border-color: var(--point); color: var(--point); }
+
+/* 찾은 결과가 없을 때 */
+.record-none {
+  padding: 18px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ===================================================================
+   이번 주 정리 (2505 김준우)
+   =================================================================== */
+
+.week-cards {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.week-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 11px 13px;
+  border-radius: 11px;
+  background: #f7f8fa;
+  border-left: 0;
+}
+.week-card-title { font-size: 13.5px; font-weight: 700; }
+.week-card-desc  { font-size: 11.5px; color: var(--muted); }
+
+/* 글자 색으로만 구분합니다. 경고 띠를 두르지 않는 이유는
+   계획서에 적은 '잔소리하지 않는다' 때문입니다. */
+.week-card--point .week-card-title { color: var(--point); }
+.week-card--warn  .week-card-title { color: var(--warn); }
+.week-card--safe  .week-card-title { color: var(--safe); }
+.week-card--muted .week-card-title { color: var(--text); }

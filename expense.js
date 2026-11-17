@@ -15,7 +15,11 @@ let 빠른입력목록 = [];
 let 지출목록 = [];
 let 내돈 = null;
 let 추가입금목록 = [];
-let 모드 = "지출";          // "지출" 또는 "입금"           // 오늘 한도를 계산하려면 잔액·입금일·고정지출이 필요합니다
+let 모드 = "지출";          // "지출" 또는 "입금"
+
+/* 1514 조호준 : 기록이 쌓이면 찾기 어려워진다는 의견.
+   목록을 거르기만 하므로 저장된 내용은 건드리지 않는다. */
+let 거르기 = { 글자: "", 카테고리: "", 부터: "", 까지: "" };          // 오늘 한도를 계산하려면 잔액·입금일·고정지출이 필요합니다
 
 
 /* -------------------------------------------------------------------
@@ -68,22 +72,48 @@ function 목록그리기() {
 
   /* 지출과 추가 입금을 한 목록에 섞어서 보여 줍니다.
      종류를 함께 들고 다녀야 삭제할 때 어느 표에서 지울지 알 수 있습니다. */
-  const 전체 = []
+  const 모두 = []
     .concat(지출목록.map(function (x) { return Object.assign({ 종류: "지출" }, x); }))
     .concat(추가입금목록.map(function (x) { return Object.assign({ 종류: "입금" }, x); }));
 
-  if (전체.length === 0) {
+  if (모두.length === 0) {
     목록칸.innerHTML = `<li class="record-empty">아직 기록한 내역이 없습니다.</li>`;
     요약칸.textContent = "0건";
     return;
   }
 
+  // 검색 조건에 맞는 것만 남깁니다
+  const 전체 = 모두.filter(function (항목) {
+    if (거르기.부터 && 항목.날짜 < 거르기.부터) return false;
+    if (거르기.까지 && 항목.날짜 > 거르기.까지) return false;
+    if (거르기.카테고리) {
+      const 이름 = 항목.종류 === "입금" ? "추가 입금" : 항목.카테고리;
+      if (이름 !== 거르기.카테고리) return false;
+    }
+    if (거르기.글자) {
+      const 찾을말 = 거르기.글자.toLowerCase();
+      const 대상 = ((항목.메모 || "") + " " + (항목.카테고리 || "") +
+                   (항목.종류 === "입금" ? " 추가 입금" : "")).toLowerCase();
+      if (대상.indexOf(찾을말) === -1) return false;
+    }
+    return true;
+  });
+
+  const 거르는중 = !!(거르기.글자 || 거르기.카테고리 || 거르기.부터 || 거르기.까지);
+
   let 쓴돈 = 0, 받은돈 = 0;
-  지출목록.forEach(function (항목) { 쓴돈 += 항목.금액; });
-  추가입금목록.forEach(function (항목) { 받은돈 += 항목.금액; });
-  요약칸.textContent = 받은돈 > 0
-    ? "지출 " + 원(쓴돈) + " · 입금 " + 원(받은돈)
-    : 전체.length + "건 · " + 원(쓴돈);
+  전체.forEach(function (항목) {
+    if (항목.종류 === "입금") 받은돈 += 항목.금액; else 쓴돈 += 항목.금액;
+  });
+  요약칸.textContent = (거르는중 ? "찾은 " + 전체.length + "건 · " : "")
+    + (받은돈 > 0
+        ? "지출 " + 원(쓴돈) + " · 입금 " + 원(받은돈)
+        : (거르는중 ? 원(쓴돈) : 전체.length + "건 · " + 원(쓴돈)));
+
+  if (전체.length === 0) {
+    목록칸.innerHTML = `<li class="record-none">조건에 맞는 기록이 없습니다.<br>검색어나 날짜를 바꿔 보세요.</li>`;
+    return;
+  }
 
   // 날짜순으로 정렬한 뒤 최근 것이 위로 오게 뒤집습니다
   전체.sort(function (a, b) { return a.날짜 < b.날짜 ? -1 : (a.날짜 > b.날짜 ? 1 : a.번호 - b.번호); });
@@ -245,6 +275,42 @@ function 폼연결() {
 }
 
 
+/* 검색·필터 연결 (1514 조호준) */
+function 거르기연결() {
+  const 글자칸 = document.getElementById("filter-word");
+  const 카테고리칸 = document.getElementById("filter-category");
+  const 부터칸 = document.getElementById("filter-from");
+  const 까지칸 = document.getElementById("filter-to");
+  if (!글자칸) return;
+
+  // 카테고리 고르는 칸 채우기 (추가 입금도 찾을 수 있게)
+  저장소.카테고리목록.concat(["추가 입금"]).forEach(function (이름) {
+    const o = document.createElement("option");
+    o.value = 이름; o.textContent = 이름;
+    카테고리칸.appendChild(o);
+  });
+
+  function 바뀜() {
+    거르기 = {
+      글자: 글자칸.value.trim(),
+      카테고리: 카테고리칸.value,
+      부터: 부터칸.value,
+      까지: 까지칸.value
+    };
+    목록그리기();
+  }
+
+  [글자칸, 카테고리칸, 부터칸, 까지칸].forEach(function (칸) {
+    칸.addEventListener("input", 바뀜);
+    칸.addEventListener("change", 바뀜);
+  });
+
+  document.getElementById("filter-reset").addEventListener("click", function () {
+    글자칸.value = ""; 카테고리칸.value = ""; 부터칸.value = ""; 까지칸.value = "";
+    바뀜();
+  });
+}
+
 /* 지출 / 입금 전환 */
 function 모드연결() {
   const 칸 = document.getElementById("mode-switch");
@@ -280,6 +346,7 @@ function 모드연결() {
   document.getElementById("date").value = 날짜글자(오늘0시());
   폼연결();
   모드연결();
+  거르기연결();
 
   지출목록 = await 저장소.지출목록읽기();   // Supabase 에서 불러오기
   추가입금목록 = (await 저장소.추가입금읽기()) || [];
