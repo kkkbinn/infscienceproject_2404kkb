@@ -73,6 +73,7 @@ const 안내 = (function () {
   let 현재 = 0;
   let 보일단계 = [];
   let 덮개, 구멍, 말풍선;
+  let 그리기타이머 = null;
 
   function 만들기() {
     덮개 = document.createElement("div");
@@ -113,8 +114,12 @@ const 안내 = (function () {
     // 설명할 곳이 화면 가운데 오도록 먼저 옮깁니다
     el.scrollIntoView({ block: "center", behavior: "smooth" });
 
-    // 스크롤이 멈춘 뒤에 위치를 재야 정확합니다
-    setTimeout(function () {
+    /* 스크롤이 멈춘 뒤에 위치를 재야 정확합니다.
+       다만 기다리는 사이에 건너뛰기를 누르면 안내가 이미 사라지고 없습니다.
+       그 상태에서 글자를 바꾸려 하면 오류가 나므로 먼저 확인합니다. */
+    clearTimeout(그리기타이머);
+    그리기타이머 = setTimeout(function () {
+      if (!덮개 || !document.body.contains(덮개)) return;
       const r = el.getBoundingClientRect();
       const 여유 = 8;
       구멍.style.top = (r.top - 여유) + "px";
@@ -148,6 +153,8 @@ const 안내 = (function () {
 
   function 끝내기() {
     try { localStorage.setItem(본적있음키, "1"); } catch (e) { /* 저장 못 해도 그만 */ }
+    clearTimeout(그리기타이머);
+    그리기타이머 = null;
     if (덮개) { 덮개.remove(); 덮개 = null; }
     window.removeEventListener("resize", 그리기);
   }
@@ -157,6 +164,7 @@ const 안내 = (function () {
     보일단계 = 단계들.filter(function (s) { return document.querySelector(s.대상); });
     if (보일단계.length === 0) return;
 
+    if (덮개) 끝내기();      // 이미 열려 있으면 먼저 닫습니다
     현재 = 0;
     만들기();
     그리기();
