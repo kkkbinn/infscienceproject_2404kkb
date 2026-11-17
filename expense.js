@@ -311,23 +311,53 @@ function 거르기연결() {
   });
 }
 
+/* 결과만 짧게 알려 줍니다 */
+let 알림타이머 = null;
+function 알림(글) {
+  const 칸 = document.getElementById("toast");
+  if (!칸) return;
+  칸.textContent = 글;
+  칸.hidden = false;
+  clearTimeout(알림타이머);
+  알림타이머 = setTimeout(function () { 칸.hidden = true; }, 2200);
+}
+
 /* 지출 / 입금 전환 */
+function 모드바꾸기(새모드) {
+  모드 = 새모드;
+  const 칸 = document.getElementById("mode-switch");
+  칸.querySelectorAll(".mode-btn").forEach(function (x) {
+    x.classList.toggle("mode-btn--on", x.dataset.mode === 새모드);
+  });
+  // 입금에는 카테고리가 없습니다
+  document.getElementById("category-field").hidden = (새모드 === "입금");
+  document.getElementById("save-btn").textContent = (새모드 === "입금") ? "입금 저장" : "저장";
+  document.getElementById("memo").placeholder = (새모드 === "입금")
+    ? "세뱃돈, 길에서 주움, 용돈 …" : "학식, 친구 생일 모임 …";
+}
+
 function 모드연결() {
   const 칸 = document.getElementById("mode-switch");
   if (!칸) return;
   칸.querySelectorAll(".mode-btn").forEach(function (b) {
     b.addEventListener("click", function () {
-      모드 = b.dataset.mode;
-      칸.querySelectorAll(".mode-btn").forEach(function (x) {
-        x.classList.toggle("mode-btn--on", x === b);
-      });
-      // 입금에는 카테고리가 없습니다
-      document.getElementById("category-field").hidden = (모드 === "입금");
-      document.getElementById("save-btn").textContent = (모드 === "입금") ? "입금 저장" : "저장";
-      document.getElementById("memo").placeholder = (모드 === "입금")
-        ? "세뱃돈, 중고거래, 환급 …" : "학식, 친구 생일 모임 …";
+      모드바꾸기(b.dataset.mode);
       document.getElementById("amount").focus();
     });
+  });
+
+  /* 금액에 빼기를 붙여 넣으면 알아서 입금으로 바꿔 줍니다.
+     '예기치 못하게 생긴 돈은 음수 지출로 적으면 되지 않나' 라는 생각에서 나온 것인데,
+     음수를 그대로 저장하면 카테고리가 이상해지고 하루 평균 지출까지 틀어지므로
+     입력만 그렇게 받고 저장은 입금으로 한다. */
+  const 금액칸 = document.getElementById("amount");
+  금액칸.addEventListener("input", function () {
+    const 값 = 금액칸.value.trim();
+    if (값.charAt(0) === "-" && 모드 !== "입금") {
+      금액칸.value = 값.slice(1);     // 빼기는 떼고
+      모드바꾸기("입금");
+      알림("빼기를 붙이셨네요. 입금으로 바꿨어요");
+    }
   });
 }
 

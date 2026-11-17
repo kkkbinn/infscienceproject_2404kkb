@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>지출 입력 · 불규칙 수입 대학생을 위한 지출 관리 서비스</title>
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=29">
 </head>
 <body>
 
@@ -43,7 +43,7 @@
         <form id="expense-form">
 
           <div class="field">
-            <label class="field-label" for="amount">금액</label>
+            <label class="field-label" for="amount">금액 <span class="field-hint">(앞에 - 를 붙이면 입금으로 바뀝니다)</span></label>
             <!-- type="number" 를 쓰면 휴대폰에서 숫자 자판이 먼저 뜹니다 -->
             <input class="field-input" type="number" id="amount"
                    placeholder="12000" min="1" step="100" required>
@@ -110,11 +110,14 @@
       <a class="tab" href="stats.html">통계</a>
     </nav>
 
+    <!-- 기록했을 때 짧게 떴다 사라지는 알림 -->
+    <div class="toast" id="toast" hidden></div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase.js?v=28"></script>
-  <script src="storage.js?v=28"></script>
-  <script src="expense.js?v=28"></script>
+  <script src="supabase.js?v=29"></script>
+  <script src="storage.js?v=29"></script>
+  <script src="expense.js?v=29"></script>
 </body>
 </html>
