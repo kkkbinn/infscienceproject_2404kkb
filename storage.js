@@ -131,6 +131,90 @@ const 저장소 = (function () {
       return 결과;
     },
 
+    /* ---------------- 빠른 입력 항목 (동료 피드백 ①) ----------------
+       1511 이정현 / 1315 전재현 : 학식·버스·커피 3개로 고정돼 있어
+       자주 쓰는 항목을 직접 등록할 수 있으면 좋겠다는 의견.
+       계획서 Input ⑤ 에 써 두고 못 만들었던 기능이다. */
+
+    기본빠른입력: [
+      { 이름: "학식", 금액: 5000, 카테고리: "식비" },
+      { 이름: "버스", 금액: 1500, 카테고리: "교통" },
+      { 이름: "커피", 금액: 1500, 카테고리: "카페" }
+    ],
+
+    빠른입력읽기: async function () {
+      const { data, error } = await sb
+        .from("quick_items")
+        .select("id, name, amount, category")
+        .order("id", { ascending: true });
+      if (error) { console.error("빠른 입력 불러오기 실패", error); return null; }
+
+      // 처음 쓰는 사람에게는 기본 3개를 넣어 줍니다
+      if (!data || data.length === 0) return await 저장소.빠른입력초기화();
+      return data.map(function (r) {
+        return { 번호: r.id, 이름: r.name, 금액: r.amount, 카테고리: r.category };
+      });
+    },
+
+    빠른입력초기화: async function () {
+      const { data: u } = await sb.auth.getUser();
+      if (!u.user) return [];
+      const 줄들 = 저장소.기본빠른입력.map(function (q) {
+        return { user_id: u.user.id, name: q.이름, amount: q.금액, category: q.카테고리 };
+      });
+      const { data, error } = await sb.from("quick_items").insert(줄들).select("id, name, amount, category");
+      if (error) { console.error("빠른 입력 기본값 넣기 실패", error); return []; }
+      return data.map(function (r) {
+        return { 번호: r.id, 이름: r.name, 금액: r.amount, 카테고리: r.category };
+      });
+    },
+
+    빠른입력추가: async function (이름, 금액, 카테고리) {
+      const { data, error } = await sb
+        .from("quick_items")
+        .insert({ name: 이름, amount: 금액, category: 카테고리 })
+        .select("id").single();
+      if (error) { console.error("빠른 입력 저장 실패", error); return null; }
+      return data.id;
+    },
+
+    빠른입력삭제: async function (번호) {
+      const { error } = await sb.from("quick_items").delete().eq("id", 번호);
+      if (error) { console.error("빠른 입력 삭제 실패", error); return false; }
+      return true;
+    },
+
+    /* ---------------- 예정된 지출 (동료 피드백 ②) ----------------
+       2616 최유빈 : 선물값처럼 한 번만 나갈 돈을 등록하면
+       그날까지 매일 조금씩 미리 떼어 두면 좋겠다는 의견.
+       계획서 Input ⑥ · 처리 ② 에 써 두고 못 만들었던 기능이다. */
+
+    예정지출읽기: async function () {
+      const { data, error } = await sb
+        .from("planned_expenses")
+        .select("id, name, amount, due_date")
+        .order("due_date", { ascending: true });
+      if (error) { console.error("예정 지출 불러오기 실패", error); return null; }
+      return data.map(function (r) {
+        return { 번호: r.id, 이름: r.name, 금액: r.amount, 날짜: r.due_date };
+      });
+    },
+
+    예정지출추가: async function (이름, 금액, 날짜) {
+      const { data, error } = await sb
+        .from("planned_expenses")
+        .insert({ name: 이름, amount: 금액, due_date: 날짜 })
+        .select("id").single();
+      if (error) { console.error("예정 지출 저장 실패", error); return null; }
+      return data.id;
+    },
+
+    예정지출삭제: async function (번호) {
+      const { error } = await sb.from("planned_expenses").delete().eq("id", 번호);
+      if (error) { console.error("예정 지출 삭제 실패", error); return false; }
+      return true;
+    },
+
     /* ---------------- 고정지출 (항목별) ---------------- */
 
     고정지출읽기: async function () {
@@ -290,6 +374,24 @@ function 기준이후쓴돈(목록, 기준시각) {
   let 합 = 0;
   목록.forEach(function (항목) {
     if (항목.기록시각 && new Date(항목.기록시각).getTime() > 기준) 합 += 항목.금액;
+  });
+  return 합;
+}
+
+/* 오늘부터 다음 입금일 사이에 나갈 예정 지출의 합 (동료 피드백 ②)
+
+   입금일 뒤에 잡힌 예정 지출은 이번 기간의 돈이 아니므로 빼지 않습니다.
+   이 합계를 쓸 수 있는 돈에서 먼저 빼고 남은 일수로 나누면,
+   따로 계산하지 않아도 '그날까지 매일 조금씩 떼어 두는' 효과가 납니다.
+     예) 선물값 30,000원 · 남은 일수 9일 → 하루 약 3,333원씩 미리 빠짐 */
+function 기간내예정지출(목록, 입금일글자) {
+  if (!목록 || !입금일글자) return 0;
+  const 오늘 = 오늘0시();
+  const 입금일 = 글자날짜(입금일글자);
+  let 합 = 0;
+  목록.forEach(function (항목) {
+    const d = 글자날짜(항목.날짜);
+    if (d >= 오늘 && d <= 입금일) 합 += 항목.금액;
   });
   return 합;
 }

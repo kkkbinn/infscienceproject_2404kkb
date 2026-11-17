@@ -531,3 +531,9 @@ body {
 }
 /* display 를 지정했으므로 [hidden] 을 다시 살려 줍니다 */
 .toast[hidden] { display: none; }
+
+/* 빠른 입력 / 예정 지출 관리 목록은 조금 작게 */
+#quick-manage .record-item, #planned-list .record-item { padding: 9px 0; }
+#quick-manage { margin-top: 10px; }
+/* 날짜 입력칸이 좁아 보이지 않게 */
+.fixed-form input[type="date"] { flex: 1.8; }

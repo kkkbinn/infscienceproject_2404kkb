@@ -6,7 +6,7 @@
   <!-- viewport: 휴대폰에서 화면 너비에 맞춰 표시되게 합니다 (5차시 배포 후 폰 접속용) -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>불규칙 수입 대학생을 위한 지출 관리 서비스</title>
-  <link rel="stylesheet" href="style.css?v=16">
+  <link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 
@@ -48,7 +48,7 @@
 
         <div class="field">
           <label class="field-label" for="input-balance">현재 잔액 (통장 + 현금)</label>
-          <input class="field-input" type="number" id="input-balance" min="0" placeholder="312000">
+          <input class="field-input" type="number" id="input-balance" min="0" step="1000" placeholder="312000">
         </div>
 
         <div class="field">
@@ -68,7 +68,7 @@
           </div>
           <div class="field-col">
             <label class="field-label" for="input-income-amount">들어올 금액</label>
-            <input class="field-input" type="number" id="input-income-amount" min="0" placeholder="478000">
+            <input class="field-input" type="number" id="input-income-amount" min="0" step="1000" placeholder="478000">
           </div>
         </div>
 
@@ -91,12 +91,32 @@
           <input class="field-input fixed-name" type="text" id="fixed-name"
                  placeholder="통신비" maxlength="20">
           <input class="field-input fixed-amount" type="number" id="fixed-amount"
-                 placeholder="55000" min="1">
+                 placeholder="55000" min="1" step="1000">
           <input class="field-input fixed-day" type="number" id="fixed-day"
                  placeholder="25일" min="1" max="31">
           <button class="fixed-add" type="submit">추가</button>
         </form>
         <p class="note">통신비·구독료·교통 정기권처럼 매달 빠져나가는 돈입니다. 합계가 '오늘의 기준' 계산에서 먼저 빠집니다.</p>
+      </section>
+
+      <!-- ============ 예정된 지출 (동료 피드백 ② · 2616 최유빈) ============ -->
+      <section class="block">
+        <h2 class="block-title">
+          예정된 지출
+          <span class="block-count" id="planned-total">0건</span>
+        </h2>
+
+        <ul class="record-list" id="planned-list"></ul>
+
+        <form id="planned-form" class="fixed-form">
+          <input class="field-input fixed-name" type="text" id="planned-name"
+                 placeholder="생일 선물" maxlength="20">
+          <input class="field-input fixed-amount" type="number" id="planned-amount"
+                 placeholder="30000" min="1" step="1000">
+          <input class="field-input fixed-day" type="date" id="planned-date">
+          <button class="fixed-add" type="submit">추가</button>
+        </form>
+        <p class="note" id="planned-note">선물값처럼 그날 한 번 나갈 돈입니다. 그날까지 매일 조금씩 미리 떼어 둡니다.</p>
       </section>
 
       <!-- ============ 중단 : 카테고리별 남은 예산 막대 ============ -->
@@ -111,6 +131,18 @@
         <h2 class="block-title">빠른 입력</h2>
         <div class="quick-list" id="quick-list"></div>
         <p class="note">버튼 한 번이면 이 화면에서 바로 기록되고, 위의 금액이 즉시 줄어듭니다.</p>
+
+        <!-- 동료 피드백 ① · 1511 이정현 / 1315 전재현 : 항목을 직접 등록 -->
+        <ul class="record-list" id="quick-manage"></ul>
+
+        <form id="quick-form" class="fixed-form">
+          <input class="field-input fixed-name" type="text" id="quick-name"
+                 placeholder="편의점" maxlength="12">
+          <input class="field-input fixed-amount" type="number" id="quick-amount"
+                 placeholder="3000" min="1" step="100">
+          <select class="field-input fixed-day" id="quick-category"></select>
+          <button class="fixed-add" type="submit">추가</button>
+        </form>
       </section>
 
     </main>
@@ -130,8 +162,8 @@
   <!-- script를 body 끝에 두는 이유 : 위 HTML이 다 만들어진 뒤에 실행되어야
        app.js가 id로 자리를 찾을 수 있기 때문입니다 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase.js?v=16"></script>
-  <script src="storage.js?v=16"></script>
-  <script src="app.js?v=16"></script>
+  <script src="supabase.js?v=18"></script>
+  <script src="storage.js?v=18"></script>
+  <script src="app.js?v=18"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>처음 설정 · 불규칙 수입 대학생을 위한 지출 관리 서비스</title>
-  <link rel="stylesheet" href="style.css?v=16">
+  <link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 
@@ -23,7 +23,7 @@
 
           <div class="field">
             <label class="field-label" for="s-balance">1. 지금 가진 돈 <span class="field-hint">(통장 + 현금)</span></label>
-            <input class="field-input" type="number" id="s-balance" min="0" placeholder="312000" required>
+            <input class="field-input" type="number" id="s-balance" min="0" step="1000" placeholder="312000" required>
           </div>
 
           <div class="field">
@@ -43,13 +43,13 @@
             </div>
             <div class="field-col">
               <label class="field-label" for="s-income-amount">얼마쯤</label>
-              <input class="field-input" type="number" id="s-income-amount" min="0" placeholder="478000">
+              <input class="field-input" type="number" id="s-income-amount" min="0" step="1000" placeholder="478000">
             </div>
           </div>
 
           <div class="field">
             <label class="field-label" for="s-fixed">4. 그날까지 빠져나갈 고정지출 <span class="field-hint">(통신비·구독료 등)</span></label>
-            <input class="field-input" type="number" id="s-fixed" min="0" placeholder="200400" required>
+            <input class="field-input" type="number" id="s-fixed" min="0" step="1000" placeholder="200400" required>
           </div>
 
           <!-- 넣는 즉시 결과를 미리 보여 줍니다 -->
@@ -70,8 +70,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase.js?v=16"></script>
-  <script src="storage.js?v=16"></script>
-  <script src="setup.js?v=16"></script>
+  <script src="supabase.js?v=18"></script>
+  <script src="storage.js?v=18"></script>
+  <script src="setup.js?v=18"></script>
 </body>
 </html>

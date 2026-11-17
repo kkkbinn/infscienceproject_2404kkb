@@ -127,13 +127,26 @@ function 꺾은선그리기() {
   const 면 = x(0).toFixed(1) + "," + y(0).toFixed(1) + " " + 선 + " " +
              x(일수).toFixed(1) + "," + y(0).toFixed(1);
 
-  // 가로 눈금선 3개 (0원 / 절반 / 전액)
+  /* 가로 눈금선 3개 (0원 / 절반 / 전액)
+
+     동료 피드백 ④ (1413 정인영) : 세로축이 늘 '만' 단위로 고정돼 있어
+     잔액이 적을 때는 전부 0만으로 보여 얼마가 남았는지 알 수 없었다.
+     그래서 금액 크기에 맞춰 만·천·원 중에서 단위를 골라 쓴다. */
+  function 축글자(값) {
+    if (내돈.잔액 >= 100000) {                       // 10만 원 이상 → 만 단위
+      const v = 값 / 10000;
+      return (v >= 10 || v === 0 ? Math.round(v) : v.toFixed(1)) + "만";
+    }
+    if (내돈.잔액 >= 10000) return Math.round(값 / 1000) + "천";   // 1만 원 이상 → 천 단위
+    return Math.round(값) + "원";                                  // 그보다 적으면 원 그대로
+  }
+
   let 눈금 = "";
   [0, 0.5, 1].forEach(function (비율) {
     const 값 = 내돈.잔액 * 비율;
     const yy = y(값).toFixed(1);
     눈금 += `<line class="grid" x1="${여백.왼}" y1="${yy}" x2="${폭 - 여백.오}" y2="${yy}" />`;
-    눈금 += `<text class="axis" x="${여백.왼 - 6}" y="${yy}" text-anchor="end" dominant-baseline="middle">${Math.round(값 / 10000)}만</text>`;
+    눈금 += `<text class="axis" x="${여백.왼 - 6}" y="${yy}" text-anchor="end" dominant-baseline="middle">${축글자(값)}</text>`;
   });
 
   /* 0원이 되는 지점과 입금일 표시.

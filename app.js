@@ -21,13 +21,9 @@
 let 내돈 = { 잔액: 0, 고정지출: 0, 입금일: "", 수입종류: "", 수입금액: 0, 입력시각: null };
 let 지출목록 = [];
 let 고정지출목록 = [];
+let 예정지출목록 = [];      // 동료 피드백 ② (2616 최유빈)
+let 빠른입력목록 = [];      // 동료 피드백 ① (1511 이정현 / 1315 전재현)
 let 고정지출표사용가능 = true;   // 표를 못 읽으면 false. 이때는 옛 합계 값을 그대로 씁니다.
-
-const 빠른입력목록 = [
-  { 이름: "학식", 금액: 5000, 카테고리: "식비" },
-  { 이름: "버스", 금액: 1500, 카테고리: "교통" },
-  { 이름: "커피", 금액: 1500, 카테고리: "카페" }
-];
 
 
 /* -------------------------------------------------------------------
@@ -78,12 +74,18 @@ function 안전금액그리기(입력잔액, 고정지출, 남은일수) {
   const 어제까지쓴돈 = Math.max(적은뒤쓴돈 - 오늘쓴금액, 0);
 
   const 오늘아침잔액 = 입력잔액 - 어제까지쓴돈;
-  const 기준 = 안전금액계산(오늘아침잔액, 고정지출, 남은일수);
+
+  /* 동료 피드백 ② : 입금일까지 사이에 잡힌 예정 지출을 먼저 뺍니다.
+     빼고 나서 남은 일수로 나누므로, 따로 계산하지 않아도
+     '그날까지 매일 조금씩 떼어 두는' 효과가 납니다. */
+  const 예정지출 = 기간내예정지출(예정지출목록, 내돈.입금일);
+  const 기준 = 안전금액계산(오늘아침잔액 - 예정지출, 고정지출, 남은일수);
   const 남은금액 = 기준 - 오늘쓴금액;
 
   // 기준이 되는 계산은 늘 같은 자리에 보여 줍니다 (손 검산용)
-  계산식칸.textContent =
-    "오늘의 기준 (" + 원(오늘아침잔액) + " − " + 원(고정지출) + ") ÷ " + 남은일수 + "일 = " + 원(기준);
+  계산식칸.textContent = 예정지출 > 0
+    ? "오늘의 기준 (" + 원(오늘아침잔액) + " − " + 원(고정지출) + " − 예정 " + 원(예정지출) + ") ÷ " + 남은일수 + "일 = " + 원(기준)
+    : "오늘의 기준 (" + 원(오늘아침잔액) + " − " + 원(고정지출) + ") ÷ " + 남은일수 + "일 = " + 원(기준);
 
   if (오늘쓴금액 === 0) {
     라벨칸.textContent = "오늘 쓸 수 있는 금액";
@@ -110,7 +112,7 @@ function 안전금액그리기(입력잔액, 고정지출, 남은일수) {
        (설계 원칙 1·2 - 잔소리하지 않는다 / 바뀐 숫자만 보여 준다) */
     const 초과 = -남은금액;
     const 내일기준 = 남은일수 > 1
-      ? 안전금액계산(오늘아침잔액 - 오늘쓴금액, 고정지출, 남은일수 - 1)
+      ? 안전금액계산(오늘아침잔액 - 오늘쓴금액 - 예정지출, 고정지출, 남은일수 - 1)
       : null;
 
     라벨칸.textContent = "오늘 기준보다 더 쓴 금액";
@@ -253,6 +255,148 @@ function 고정지출연결() {
   });
 }
 
+/* ---------------- 예정된 지출 (동료 피드백 ② · 2616 최유빈) ---------------- */
+function 예정지출그리기() {
+  const 목록칸 = document.getElementById("planned-list");
+  const 합계칸 = document.getElementById("planned-total");
+  const 안내칸 = document.getElementById("planned-note");
+  if (!목록칸) return;
+
+  목록칸.innerHTML = "";
+  const 기간합 = 기간내예정지출(예정지출목록, 내돈.입금일);
+  const 남은일수 = 남은일수계산(내돈.입금일);
+  합계칸.textContent = 예정지출목록.length + "건 · 입금일까지 " + 원(기간합);
+
+  // 하루에 얼마씩 미리 빠지는지 보여 줍니다 (이게 피드백의 핵심)
+  안내칸.textContent = (기간합 > 0 && 남은일수 > 0)
+    ? "입금일까지 " + 원(기간합) + "이 예정돼 있어, 오늘의 기준에서 하루 "
+      + 원(Math.floor(기간합 / 남은일수)) + "씩 미리 빠지고 있습니다."
+    : "선물값처럼 그날 한 번 나갈 돈입니다. 그날까지 매일 조금씩 미리 떼어 둡니다.";
+
+  if (예정지출목록.length === 0) {
+    목록칸.innerHTML = '<li class="record-empty">등록한 예정 지출이 없습니다.</li>';
+    return;
+  }
+
+  예정지출목록.forEach(function (항목) {
+    const 지남 = 글자날짜(항목.날짜) < 오늘0시();
+    const li = document.createElement("li");
+    li.className = "record-item";
+    li.innerHTML = `
+      <div class="record-left">
+        <span class="record-category">${항목.이름}</span>
+        <span class="record-date">${항목.날짜}${지남 ? " · 날짜 지남" : ""}</span>
+      </div>
+      <span class="record-amount">${원(항목.금액)}</span>
+    `;
+    const 삭제 = document.createElement("button");
+    삭제.className = "record-delete";
+    삭제.type = "button";
+    삭제.textContent = "삭제";
+    삭제.setAttribute("aria-label", 항목.이름 + " 예정 지출 삭제");
+    삭제.addEventListener("click", async function () {
+      if (!confirm(항목.이름 + " " + 원(항목.금액) + " 예정을 지울까요?")) return;
+      if (!(await 저장소.예정지출삭제(항목.번호))) { 알림("지우지 못했어요."); return; }
+      예정지출목록 = 예정지출목록.filter(function (x) { return x.번호 !== 항목.번호; });
+      예정지출그리기();
+      다시계산(false);
+    });
+    li.appendChild(삭제);
+    목록칸.appendChild(li);
+  });
+}
+
+function 예정지출연결() {
+  const 폼 = document.getElementById("planned-form");
+  if (!폼) return;
+  document.getElementById("planned-date").value = 내돈.입금일 || 날짜글자(오늘0시());
+
+  폼.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const 이름 = document.getElementById("planned-name").value.trim();
+    const 금액 = Number(document.getElementById("planned-amount").value);
+    const 날짜 = document.getElementById("planned-date").value;
+    if (!이름 || !(금액 > 0) || !날짜) { 알림("이름·금액·날짜를 모두 넣어 주세요."); return; }
+
+    const id = await 저장소.예정지출추가(이름, 금액, 날짜);
+    if (id === null) { 알림("저장하지 못했어요."); return; }
+
+    예정지출목록.push({ 번호: id, 이름: 이름, 금액: 금액, 날짜: 날짜 });
+    예정지출목록.sort(function (a, b) { return a.날짜 < b.날짜 ? -1 : 1; });
+    document.getElementById("planned-name").value = "";
+    document.getElementById("planned-amount").value = "";
+    알림(이름 + " 예정 추가했어요");
+    예정지출그리기();
+    다시계산(false);
+  });
+}
+
+
+/* ---------------- 빠른 입력 항목 관리 (동료 피드백 ① · 1511 이정현 / 1315 전재현) ---------------- */
+function 빠른입력관리그리기() {
+  const 목록칸 = document.getElementById("quick-manage");
+  if (!목록칸) return;
+  목록칸.innerHTML = "";
+
+  빠른입력목록.forEach(function (항목) {
+    const li = document.createElement("li");
+    li.className = "record-item";
+    li.innerHTML = `
+      <div class="record-left">
+        <span class="record-category">${항목.이름}</span>
+        <span class="record-date">${항목.카테고리}</span>
+      </div>
+      <span class="record-amount">${원(항목.금액)}</span>
+    `;
+    const 삭제 = document.createElement("button");
+    삭제.className = "record-delete";
+    삭제.type = "button";
+    삭제.textContent = "삭제";
+    삭제.setAttribute("aria-label", 항목.이름 + " 빠른 입력 삭제");
+    삭제.addEventListener("click", async function () {
+      if (!confirm(항목.이름 + " 버튼을 지울까요?")) return;
+      if (!(await 저장소.빠른입력삭제(항목.번호))) { 알림("지우지 못했어요."); return; }
+      빠른입력목록 = 빠른입력목록.filter(function (x) { return x.번호 !== 항목.번호; });
+      빠른입력그리기();
+      빠른입력관리그리기();
+    });
+    li.appendChild(삭제);
+    목록칸.appendChild(li);
+  });
+}
+
+function 빠른입력연결() {
+  const 폼 = document.getElementById("quick-form");
+  if (!폼) return;
+
+  // 카테고리 선택칸 채우기
+  const sel = document.getElementById("quick-category");
+  저장소.카테고리목록.forEach(function (이름) {
+    const o = document.createElement("option");
+    o.value = 이름; o.textContent = 이름;
+    sel.appendChild(o);
+  });
+
+  폼.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const 이름 = document.getElementById("quick-name").value.trim();
+    const 금액 = Number(document.getElementById("quick-amount").value);
+    const 카테고리 = sel.value;
+    if (!이름 || !(금액 > 0)) { 알림("이름과 금액을 넣어 주세요."); return; }
+
+    const id = await 저장소.빠른입력추가(이름, 금액, 카테고리);
+    if (id === null) { 알림("저장하지 못했어요."); return; }
+
+    빠른입력목록.push({ 번호: id, 이름: 이름, 금액: 금액, 카테고리: 카테고리 });
+    document.getElementById("quick-name").value = "";
+    document.getElementById("quick-amount").value = "";
+    알림(이름 + " 버튼 추가했어요");
+    빠른입력그리기();
+    빠른입력관리그리기();
+  });
+}
+
+
 /* 화면을 옮기지 않고 결과만 짧게 알려 줍니다 */
 let 알림타이머 = null;
 function 알림(글) {
@@ -268,6 +412,11 @@ function 알림(글) {
 function 빠른입력그리기() {
   const 목록칸 = document.getElementById("quick-list");
   목록칸.innerHTML = "";
+
+  if (빠른입력목록.length === 0) {
+    목록칸.innerHTML = '<p class="note">아래에서 자주 쓰는 항목을 추가해 보세요.</p>';
+    return;
+  }
 
   빠른입력목록.forEach(function (항목) {
     const button = document.createElement("button");
@@ -398,6 +547,12 @@ async function 입력연결() {
   고정지출표사용가능 = 읽은것 !== null;
   고정지출목록 = 읽은것 || [];
 
+  // 동료 피드백으로 추가된 두 가지
+  예정지출목록 = (await 저장소.예정지출읽기()) || [];
+  빠른입력목록 = (await 저장소.빠른입력읽기()) || 저장소.기본빠른입력.map(function (q, i) {
+    return { 번호: -(i + 1), 이름: q.이름, 금액: q.금액, 카테고리: q.카테고리 };
+  });
+
   /* 예전 방식(합계 한 칸)으로 넣어 둔 값이 있으면 표로 옮깁니다 */
   if (고정지출표사용가능 && 고정지출목록.length === 0 && 내돈.고정지출 > 0) {
     고정지출목록 = await 저장소.고정지출옮기기(내돈.고정지출);
@@ -406,6 +561,10 @@ async function 입력연결() {
   await 입력연결();
   고정지출연결();
   고정지출그리기();
+  예정지출연결();
+  예정지출그리기();
+  빠른입력연결();
+  빠른입력관리그리기();
   다시계산(false);              // 화면을 열 때는 저장하지 않습니다
   await 카테고리그리기();
   빠른입력그리기();
