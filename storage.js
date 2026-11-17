@@ -184,6 +184,45 @@ const 저장소 = (function () {
       return true;
     },
 
+    /* ---------------- 입금 예정 (여러 건) ----------------
+       2511 정영광 / 1310 박민석 : 알바비·용돈·과외비가 각각 다른 날 들어오는데
+       입금일을 하나만 넣을 수 있어 계획을 세우기 어렵다는 의견. */
+
+    입금예정읽기: async function () {
+      const { data, error } = await sb
+        .from("planned_incomes")
+        .select("id, kind, amount, due_date, repeat_monthly")
+        .order("due_date", { ascending: true });
+      if (error) { console.error("입금 예정 불러오기 실패", error); return null; }
+      return data.map(function (r) {
+        return { 번호: r.id, 종류: r.kind, 금액: r.amount, 날짜: r.due_date, 매달: r.repeat_monthly };
+      });
+    },
+
+    입금예정추가: async function (종류, 금액, 날짜, 매달) {
+      const { data, error } = await sb
+        .from("planned_incomes")
+        .insert({ kind: 종류, amount: 금액, due_date: 날짜, repeat_monthly: !!매달 })
+        .select("id").single();
+      if (error) { console.error("입금 예정 저장 실패", error); return null; }
+      return data.id;
+    },
+
+    입금예정삭제: async function (번호) {
+      const { error } = await sb.from("planned_incomes").delete().eq("id", 번호);
+      if (error) { console.error("입금 예정 삭제 실패", error); return false; }
+      return true;
+    },
+
+    /* 예전에는 입금을 money_info 에 한 건만 적었다.
+       그 값이 남아 있는데 표가 비어 있으면 한 줄로 옮겨 준다. */
+    입금예정옮기기: async function (내돈) {
+      if (!내돈 || !내돈.입금일 || !(내돈.수입금액 > 0)) return [];
+      const id = await 저장소.입금예정추가(내돈.수입종류 || "알바비", 내돈.수입금액, 내돈.입금일, true);
+      if (id === null) return [];
+      return [{ 번호: id, 종류: 내돈.수입종류 || "알바비", 금액: 내돈.수입금액, 날짜: 내돈.입금일, 매달: true }];
+    },
+
     /* ---------------- 추가 입금 (꽁돈) ----------------
        세뱃돈·환급·중고거래처럼 예정에 없던 돈. 지출과 대칭으로 다룬다. */
 
@@ -435,6 +474,19 @@ function 기간내예정지출(목록, 입금일글자) {
      같은 날 같은 사람인데 두 화면의 숫자가 달랐다.
      계산을 여기 한 곳에만 두어 두 화면이 반드시 같은 값을 쓰게 한다.
    =================================================================== */
+/* 등록된 입금 예정 중 오늘 이후로 가장 가까운 것.
+   여러 건이 있으면 그중 제일 빠른 날이 '다음 입금일'이 된다. */
+function 다음입금찾기(입금예정) {
+  if (!입금예정 || 입금예정.length === 0) return null;
+  const 오늘 = 오늘0시();
+  let 가장가까운 = null;
+  입금예정.forEach(function (p) {
+    const d = 글자날짜(p.날짜);
+    if (d >= 오늘 && (가장가까운 === null || d < 글자날짜(가장가까운.날짜))) 가장가까운 = p;
+  });
+  return 가장가까운;
+}
+
 function 오늘기준계산(자료) {
   const 내돈 = 자료.내돈 || {};
   const 지출 = 자료.지출목록 || [];
@@ -442,7 +494,10 @@ function 오늘기준계산(자료) {
   const 고정 = 자료.고정지출 || [];
   const 예정 = 자료.예정지출 || [];
 
-  const 남은일수 = 남은일수계산(내돈.입금일);
+  // 입금 예정이 여러 건이면 그중 가장 가까운 날을 기준으로 삼는다
+  const 다음입금 = 다음입금찾기(자료.입금예정);
+  const 입금일 = 다음입금 ? 다음입금.날짜 : 내돈.입금일;
+  const 남은일수 = 남은일수계산(입금일);
 
   // 잔액을 적은 뒤에 쓰고 받은 돈
   const 쓴돈 = 기준이후쓴돈(지출, 내돈.입력시각);
@@ -458,11 +513,13 @@ function 오늘기준계산(자료) {
   고정.forEach(function (f) { 고정합 += f.금액; });
   if (고정.length === 0 && 내돈.고정지출 > 0) 고정합 = 내돈.고정지출;
 
-  const 예정합 = 기간내예정지출(예정, 내돈.입금일);
+  const 예정합 = 기간내예정지출(예정, 입금일);
   const 기준 = 안전금액계산(오늘아침잔액 - 예정합, 고정합, 남은일수);
 
   return {
     남은일수: 남은일수,
+    입금일: 입금일,
+    다음입금: 다음입금,
     실제잔액: 실제잔액,
     오늘아침잔액: 오늘아침잔액,
     고정지출합: 고정합,
@@ -500,15 +557,18 @@ function 잔액시뮬레이션(설정, 일수) {
   const 결과 = [];
   let 잔액 = 설정.잔액;
 
-  // 입금일이 들어오는 날짜들을 미리 만들어 둡니다 (매달 같은 날 반복)
+  /* 입금이 들어오는 날짜들을 미리 만들어 둡니다.
+     여러 건을 등록할 수 있고, '매달 반복'인 건만 다음 달에도 들어옵니다. */
   const 입금날들 = {};
-  if (설정.입금일 && 설정.수입금액 > 0) {
-    const 첫입금 = 글자날짜(설정.입금일);
-    for (let m = 0; m < 12; m++) {
-      const d = new Date(첫입금.getFullYear(), 첫입금.getMonth() + m, 첫입금.getDate());
-      입금날들[날짜글자(d)] = 설정.수입금액;
+  (설정.입금예정 || []).forEach(function (p) {
+    const 첫 = 글자날짜(p.날짜);
+    const 반복수 = p.매달 ? 12 : 1;
+    for (let m = 0; m < 반복수; m++) {
+      const d = new Date(첫.getFullYear(), 첫.getMonth() + m, 첫.getDate());
+      const 글자 = 날짜글자(d);
+      입금날들[글자] = (입금날들[글자] || 0) + p.금액;
     }
-  }
+  });
 
   // 예정 지출 / 추가 입금을 날짜별로 모아 둡니다
   const 예정날들 = {};

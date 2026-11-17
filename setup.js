@@ -51,6 +51,8 @@ document.getElementById("setup-form").addEventListener("submit", async function 
   const 버튼 = document.getElementById("s-save");
   버튼.disabled = true;
   const 성공 = await 저장소.내돈정보쓰기(v);
+  // 입금은 여러 건을 등록할 수 있으므로 표에도 한 줄 넣어 둡니다
+  if (성공 && v.수입금액 > 0) await 저장소.입금예정추가(v.수입종류, v.수입금액, v.입금일, true);
   버튼.disabled = false;
 
   if (!성공) {
@@ -70,6 +72,18 @@ document.getElementById("setup-form").addEventListener("submit", async function 
   const d = new Date();
   d.setDate(d.getDate() + 9);
   document.getElementById("s-date").value = 날짜글자(d);
+
+  /* 가입 전 체험 화면에서 넣어 본 값이 있으면 그대로 채워 줍니다.
+     같은 값을 두 번 넣게 하지 않으려는 것입니다. */
+  try {
+    const 체험 = JSON.parse(localStorage.getItem("oneulbudget.체험값") || "null");
+    if (체험) {
+      if (체험.잔액 > 0) document.getElementById("s-balance").value = 체험.잔액;
+      if (체험.입금일) document.getElementById("s-date").value = 체험.입금일;
+      if (체험.고정지출 >= 0) document.getElementById("s-fixed").value = 체험.고정지출;
+      localStorage.removeItem("oneulbudget.체험값");
+    }
+  } catch (e) { /* 없으면 그냥 넘어갑니다 */ }
   미리보기();
 
   /* 브라우저가 전에 입력했던 값을 되살리는 일이 있는데,

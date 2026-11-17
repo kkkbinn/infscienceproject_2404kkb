@@ -6,7 +6,7 @@
   <!-- viewport: 휴대폰에서 화면 너비에 맞춰 표시되게 합니다 (5차시 배포 후 폰 접속용) -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>불규칙 수입 대학생을 위한 지출 관리 서비스</title>
-  <link rel="stylesheet" href="style.css?v=22">
+  <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body>
 
@@ -51,31 +51,45 @@
           <input class="field-input" type="number" id="input-balance" min="0" step="1000" placeholder="312000">
         </div>
 
-        <div class="field">
-          <label class="field-label" for="input-income-date">다음 입금 예정일</label>
-          <input class="field-input" type="date" id="input-income-date">
-        </div>
-
-        <div class="field field-row">
-          <div class="field-col">
-            <label class="field-label" for="input-income-type">무슨 돈인가요</label>
-            <select class="field-input" id="input-income-type">
-              <option value="알바비">알바비</option>
-              <option value="용돈">용돈</option>
-              <option value="과외비">과외비</option>
-              <option value="기타">기타</option>
-            </select>
-          </div>
-          <div class="field-col">
-            <label class="field-label" for="input-income-amount">들어올 금액 <span class="field-hint">(예측에 꼭 필요)</span></label>
-            <input class="field-input" type="number" id="input-income-amount" min="0" step="1000" placeholder="478000">
-          </div>
-        </div>
+        <!-- 다음 입금일은 아래 '입금 예정'에서 가장 가까운 날로 자동 결정됩니다 -->
+        <input type="hidden" id="input-income-date">
+        <input type="hidden" id="input-income-type" value="알바비">
+        <input type="hidden" id="input-income-amount" value="0">
 
         <!-- 합계는 아래 고정지출 목록에서 자동으로 계산됩니다 -->
         <input type="hidden" id="input-fixed" value="0">
 
         <p class="balance-note" id="balance-note"></p>
+      </section>
+
+      <!-- ============ 입금 예정 (여러 건) · 2511 정영광 / 1310 박민석 ============ -->
+      <section class="block">
+        <h2 class="block-title">
+          입금 예정
+          <span class="block-count" id="income-total">0건</span>
+        </h2>
+
+        <ul class="record-list" id="income-list"></ul>
+
+        <form id="income-form" class="fixed-form">
+          <select class="field-input fixed-name" id="income-kind">
+            <option value="알바비">알바비</option>
+            <option value="용돈">용돈</option>
+            <option value="과외비">과외비</option>
+            <option value="기타">기타</option>
+          </select>
+          <input class="field-input fixed-amount" type="number" id="income-amount"
+                 placeholder="478000" min="1" step="1000">
+          <input class="field-input fixed-day" type="date" id="income-date">
+          <button class="fixed-add" type="submit">추가</button>
+        </form>
+
+        <label class="check-row">
+          <input type="checkbox" id="income-repeat" checked>
+          <span>매달 같은 날 반복해서 들어옵니다</span>
+        </label>
+
+        <p class="note" id="income-note">알바비·용돈·과외비처럼 들어오는 날이 다르면 각각 등록하세요. 가장 가까운 날이 기준이 됩니다.</p>
       </section>
 
       <!-- ============ 고정지출 (항목별) ============ -->
@@ -162,9 +176,9 @@
   <!-- script를 body 끝에 두는 이유 : 위 HTML이 다 만들어진 뒤에 실행되어야
        app.js가 id로 자리를 찾을 수 있기 때문입니다 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase.js?v=22"></script>
-  <script src="storage.js?v=22"></script>
-  <script src="tour.js?v=22"></script>
-  <script src="app.js?v=22"></script>
+  <script src="supabase.js?v=23"></script>
+  <script src="storage.js?v=23"></script>
+  <script src="tour.js?v=23"></script>
+  <script src="app.js?v=23"></script>
 </body>
 </html>

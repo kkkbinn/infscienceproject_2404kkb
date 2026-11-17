@@ -24,6 +24,8 @@ let 고정지출목록 = [];
 let 예정지출목록 = [];      // 동료 피드백 ② (2616 최유빈)
 let 빠른입력목록 = [];      // 동료 피드백 ① (1511 이정현 / 1315 전재현)
 let 추가입금목록 = [];      // 세뱃돈·환급 같은 꽁돈
+let 입금예정목록 = [];      // 동료 피드백 (2511 정영광 / 1310 박민석)
+let 입금표사용가능 = true;
 let 고정지출표사용가능 = true;   // 표를 못 읽으면 false. 이때는 옛 합계 값을 그대로 씁니다.
 
 
@@ -37,9 +39,8 @@ function 상단그리기(실제잔액, 남은일수) {
   document.getElementById("dday").textContent = 남은일수 > 0 ? "D-" + 남은일수 : "―";
 
   const 수입칸 = document.getElementById("next-income");
-  const 종류 = document.getElementById("input-income-type").value;
-  const 금액 = Number(document.getElementById("input-income-amount").value);
-  수입칸.textContent = 금액 > 0 ? 종류 + " " + 원(금액) : 종류;
+  const 다음 = 다음입금찾기(입금예정목록);
+  수입칸.textContent = 다음 ? 다음.종류 + " " + 원(다음.금액) : "입금 예정을 등록해 주세요";
 }
 
 // (2) 중앙 - 오늘의 안전 지출 금액
@@ -70,7 +71,8 @@ function 안전금액그리기(입력잔액, 고정지출, 남은일수) {
     내돈: Object.assign({}, 내돈, { 잔액: 입력잔액, 고정지출: 고정지출 }),
     지출목록: 지출목록, 추가입금: 추가입금목록,
     고정지출: 고정지출표사용가능 ? 고정지출목록 : [],
-    예정지출: 예정지출목록
+    예정지출: 예정지출목록,
+    입금예정: 입금예정목록
   });
   const 오늘아침잔액 = 값.오늘아침잔액;
   const 예정지출 = 값.예정지출합;
@@ -250,6 +252,103 @@ function 고정지출연결() {
     다시계산(true);
   });
 }
+
+/* ---------------- 입금 예정 (2511 정영광 / 1310 박민석) ---------------- */
+function 입금예정그리기() {
+  const 목록칸 = document.getElementById("income-list");
+  const 합계칸 = document.getElementById("income-total");
+  const 안내칸 = document.getElementById("income-note");
+  if (!목록칸) return;
+
+  목록칸.innerHTML = "";
+
+  if (!입금표사용가능) {
+    합계칸.textContent = "―";
+    목록칸.innerHTML = '<li class="record-empty">입금 예정 표를 아직 만들지 않았습니다.</li>';
+    return;
+  }
+
+  const 다음 = 다음입금찾기(입금예정목록);
+  합계칸.textContent = 입금예정목록.length + "건";
+
+  /* 정영광 학생이 말한 '입금이 늦어지면 어떻게 되는지'를 미리 보여 줍니다. */
+  if (다음) {
+    const 값 = 오늘기준계산({
+      내돈: 내돈, 지출목록: 지출목록, 추가입금: 추가입금목록,
+      고정지출: 고정지출표사용가능 ? 고정지출목록 : [],
+      예정지출: 예정지출목록, 입금예정: 입금예정목록
+    });
+    const 늦은날 = new Date(글자날짜(다음.날짜).getTime() + 3 * 하루밀리초);
+    const 늦은일수 = 남은일수계산(날짜글자(늦은날));
+    const 늦은기준 = 안전금액계산(값.오늘아침잔액 - 값.예정지출합, 값.고정지출합, 늦은일수);
+    안내칸.textContent = 값.기준 > 0
+      ? "가장 가까운 " + 다음.종류 + "이 기준입니다. 3일 늦어지면 하루 "
+        + 원(값.기준) + " → " + 원(늦은기준) + "이 됩니다."
+      : "알바비·용돈·과외비처럼 들어오는 날이 다르면 각각 등록하세요.";
+  } else {
+    안내칸.textContent = "알바비·용돈·과외비처럼 들어오는 날이 다르면 각각 등록하세요. 가장 가까운 날이 기준이 됩니다.";
+  }
+
+  if (입금예정목록.length === 0) {
+    목록칸.innerHTML = '<li class="record-empty">등록한 입금 예정이 없습니다.</li>';
+    return;
+  }
+
+  입금예정목록.forEach(function (항목) {
+    const 기준인가 = 다음 && 다음.번호 === 항목.번호;
+    const 지남 = 글자날짜(항목.날짜) < 오늘0시();
+    const li = document.createElement("li");
+    li.className = "record-item";
+    li.innerHTML = `
+      <div class="record-left">
+        <span class="record-category">${항목.종류}${기준인가 ? " · 기준" : ""}</span>
+        <span class="record-date">${항목.날짜}${항목.매달 ? " · 매달 반복" : ""}${지남 ? " · 날짜 지남" : ""}</span>
+      </div>
+      <span class="record-amount record-amount--in">+${원(항목.금액)}</span>
+    `;
+    const 삭제 = document.createElement("button");
+    삭제.className = "record-delete";
+    삭제.type = "button";
+    삭제.textContent = "삭제";
+    삭제.setAttribute("aria-label", 항목.종류 + " 입금 예정 삭제");
+    삭제.addEventListener("click", async function () {
+      if (!confirm(항목.종류 + " " + 원(항목.금액) + " 예정을 지울까요?")) return;
+      if (!(await 저장소.입금예정삭제(항목.번호))) { 알림("지우지 못했어요."); return; }
+      입금예정목록 = 입금예정목록.filter(function (x) { return x.번호 !== 항목.번호; });
+      입금예정그리기();
+      다시계산(true);
+    });
+    li.appendChild(삭제);
+    목록칸.appendChild(li);
+  });
+}
+
+function 입금예정연결() {
+  const 폼 = document.getElementById("income-form");
+  if (!폼) return;
+  const d = new Date(); d.setDate(d.getDate() + 9);
+  document.getElementById("income-date").value = 날짜글자(d);
+
+  폼.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const 종류 = document.getElementById("income-kind").value;
+    const 금액 = Number(document.getElementById("income-amount").value);
+    const 날짜 = document.getElementById("income-date").value;
+    const 매달 = document.getElementById("income-repeat").checked;
+    if (!(금액 > 0) || !날짜) { 알림("금액과 날짜를 넣어 주세요."); return; }
+
+    const id = await 저장소.입금예정추가(종류, 금액, 날짜, 매달);
+    if (id === null) { 알림("저장하지 못했어요."); return; }
+
+    입금예정목록.push({ 번호: id, 종류: 종류, 금액: 금액, 날짜: 날짜, 매달: 매달 });
+    입금예정목록.sort(function (a, b) { return a.날짜 < b.날짜 ? -1 : 1; });
+    document.getElementById("income-amount").value = "";
+    알림(종류 + " 예정 추가했어요");
+    입금예정그리기();
+    다시계산(true);
+  });
+}
+
 
 /* ---------------- 예정된 지출 (동료 피드백 ② · 2616 최유빈) ---------------- */
 function 예정지출그리기() {
@@ -460,6 +559,10 @@ function 지금입력값() {
 
 function 다시계산(저장할지) {
   const 값 = 지금입력값();
+  const 다음 = 다음입금찾기(입금예정목록);
+  값.입금일 = 다음 ? 다음.날짜 : 값.입금일;
+  값.수입종류 = 다음 ? 다음.종류 : 값.수입종류;
+  값.수입금액 = 다음 ? 다음.금액 : 0;
   const 남은일수 = 남은일수계산(값.입금일);
 
   // 상단에는 적은 뒤에 쓰고 받은 돈을 반영한 진짜 잔액을 보여 줍니다
@@ -467,7 +570,8 @@ function 다시계산(저장할지) {
     내돈: Object.assign({}, 내돈, { 잔액: 값.잔액 }),
     지출목록: 지출목록, 추가입금: 추가입금목록,
     고정지출: 고정지출표사용가능 ? 고정지출목록 : [],
-    예정지출: 예정지출목록
+    예정지출: 예정지출목록,
+    입금예정: 입금예정목록
   });
   const 적은뒤쓴돈 = 몫.쓴돈, 적은뒤받은돈 = 몫.받은돈;
   상단그리기(몫.실제잔액, 남은일수);
@@ -555,6 +659,14 @@ async function 입력연결() {
   // 동료 피드백으로 추가된 두 가지
   예정지출목록 = (await 저장소.예정지출읽기()) || [];
   추가입금목록 = (await 저장소.추가입금읽기()) || [];
+
+  const 입금읽은것 = await 저장소.입금예정읽기();
+  입금표사용가능 = 입금읽은것 !== null;
+  입금예정목록 = 입금읽은것 || [];
+  // 예전에 money_info 에 한 건만 적어 둔 입금이 있으면 표로 옮깁니다
+  if (입금표사용가능 && 입금예정목록.length === 0 && 내돈.수입금액 > 0) {
+    입금예정목록 = await 저장소.입금예정옮기기(내돈);
+  }
   빠른입력목록 = (await 저장소.빠른입력읽기()) || 저장소.기본빠른입력.map(function (q, i) {
     return { 번호: -(i + 1), 이름: q.이름, 금액: q.금액, 카테고리: q.카테고리 };
   });
@@ -567,6 +679,8 @@ async function 입력연결() {
   await 입력연결();
   고정지출연결();
   고정지출그리기();
+  입금예정연결();
+  입금예정그리기();
   예정지출연결();
   예정지출그리기();
   빠른입력연결();
