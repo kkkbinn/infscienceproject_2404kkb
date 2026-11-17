@@ -191,18 +191,27 @@ const 저장소 = (function () {
     입금예정읽기: async function () {
       const { data, error } = await sb
         .from("planned_incomes")
-        .select("id, kind, amount, due_date, repeat_monthly")
+        .select("id, kind, amount, due_date, repeat_kind, repeat_every")
         .order("due_date", { ascending: true });
       if (error) { console.error("입금 예정 불러오기 실패", error); return null; }
       return data.map(function (r) {
-        return { 번호: r.id, 종류: r.kind, 금액: r.amount, 날짜: r.due_date, 매달: r.repeat_monthly };
+        return {
+          번호: r.id, 종류: r.kind, 금액: r.amount, 날짜: r.due_date,
+          주기종류: r.repeat_kind || "months",   // none / days / months
+          주기값: r.repeat_every || 1
+        };
       });
     },
 
-    입금예정추가: async function (종류, 금액, 날짜, 매달) {
+    입금예정추가: async function (종류, 금액, 날짜, 주기종류, 주기값) {
       const { data, error } = await sb
         .from("planned_incomes")
-        .insert({ kind: 종류, amount: 금액, due_date: 날짜, repeat_monthly: !!매달 })
+        .insert({
+          kind: 종류, amount: 금액, due_date: 날짜,
+          repeat_kind: 주기종류 || "months",
+          repeat_every: 주기값 || 1,
+          repeat_monthly: (주기종류 || "months") === "months"
+        })
         .select("id").single();
       if (error) { console.error("입금 예정 저장 실패", error); return null; }
       return data.id;
@@ -218,9 +227,40 @@ const 저장소 = (function () {
        그 값이 남아 있는데 표가 비어 있으면 한 줄로 옮겨 준다. */
     입금예정옮기기: async function (내돈) {
       if (!내돈 || !내돈.입금일 || !(내돈.수입금액 > 0)) return [];
-      const id = await 저장소.입금예정추가(내돈.수입종류 || "알바비", 내돈.수입금액, 내돈.입금일, true);
+      const id = await 저장소.입금예정추가(내돈.수입종류 || "알바비", 내돈.수입금액, 내돈.입금일, "months", 1);
       if (id === null) return [];
-      return [{ 번호: id, 종류: 내돈.수입종류 || "알바비", 금액: 내돈.수입금액, 날짜: 내돈.입금일, 매달: true }];
+      return [{ 번호: id, 종류: 내돈.수입종류 || "알바비", 금액: 내돈.수입금액,
+                날짜: 내돈.입금일, 주기종류: "months", 주기값: 1 }];
+    },
+
+    /* ---------------- 목표 금액 ----------------
+       '이날까지 얼마를 모으고 싶다' 를 적어 두면,
+       그 목표를 지키면서 오늘 얼마까지 쓸 수 있는지 따로 계산해 준다. */
+
+    목표읽기: async function () {
+      const { data, error } = await sb
+        .from("goals")
+        .select("id, name, amount, target_date")
+        .order("target_date", { ascending: true });
+      if (error) { console.error("목표 불러오기 실패", error); return null; }
+      return data.map(function (r) {
+        return { 번호: r.id, 이름: r.name, 금액: r.amount, 날짜: r.target_date };
+      });
+    },
+
+    목표추가: async function (이름, 금액, 날짜) {
+      const { data, error } = await sb
+        .from("goals")
+        .insert({ name: 이름, amount: 금액, target_date: 날짜 })
+        .select("id").single();
+      if (error) { console.error("목표 저장 실패", error); return null; }
+      return data.id;
+    },
+
+    목표삭제: async function (번호) {
+      const { error } = await sb.from("goals").delete().eq("id", 번호);
+      if (error) { console.error("목표 삭제 실패", error); return false; }
+      return true;
     },
 
     /* ---------------- 추가 입금 (꽁돈) ----------------
@@ -464,6 +504,59 @@ function 기간내예정지출(목록, 입금일글자) {
   return 합;
 }
 
+/* 입금 예정을 주기에 맞춰 앞으로 N일치 날짜로 펼칩니다.
+
+   주기종류 : none(한 번만) / days(며칠마다) / months(몇 달마다)
+   격주로 들어오는 알바비는 days 14, 두 달에 한 번은 months 2 가 됩니다. */
+function 입금날짜펼치기(입금예정, 일수) {
+  const 결과 = {};
+  const 끝 = new Date(오늘0시().getTime() + 일수 * 하루밀리초);
+
+  (입금예정 || []).forEach(function (p) {
+    const 첫 = 글자날짜(p.날짜);
+    const 종류 = p.주기종류 || "months";
+    const 간격 = Math.max(p.주기값 || 1, 1);
+
+    if (종류 === "none") {
+      결과[p.날짜] = (결과[p.날짜] || 0) + p.금액;
+      return;
+    }
+
+    for (let k = 0; k < 400; k++) {
+      let d;
+      if (종류 === "days") {
+        d = new Date(첫.getTime() + k * 간격 * 하루밀리초);
+      } else {
+        d = new Date(첫.getFullYear(), 첫.getMonth() + k * 간격, 첫.getDate());
+      }
+      if (d > 끝) break;
+      const 글자 = 날짜글자(d);
+      결과[글자] = (결과[글자] || 0) + p.금액;
+    }
+  });
+  return 결과;
+}
+
+/* 등록된 입금 중 금액이 가장 큰 것 (월급처럼 중심이 되는 수입) */
+function 가장큰입금(입금예정) {
+  if (!입금예정 || 입금예정.length === 0) return null;
+  let 큰 = 입금예정[0];
+  입금예정.forEach(function (p) { if (p.금액 > 큰.금액) 큰 = p; });
+  return 큰;
+}
+
+/* 어떤 입금이 오늘 이후 처음 들어오는 날 */
+function 다음번입금날(항목, 일수) {
+  if (!항목) return null;
+  const 날들 = Object.keys(입금날짜펼치기([항목], 일수 || 400)).sort();
+  const 오늘 = 날짜글자(오늘0시());
+  for (let i = 0; i < 날들.length; i++) {
+    if (날들[i] >= 오늘) return 날들[i];
+  }
+  return null;
+}
+
+
 /* ===================================================================
    오늘의 기준을 구하는 단 하나의 함수
 
@@ -534,6 +627,72 @@ function 오늘기준계산(자료) {
 
 
 /* ===================================================================
+   목표 금액을 지키면서 오늘 얼마까지 쓸 수 있는지
+
+   '오늘의 기준'과 따로 계산한다.
+   오늘의 기준은 다음 입금일까지 버티는 것만 생각하지만,
+   목표는 그날까지 일정 금액을 남겨 두어야 하므로 더 빡빡하다.
+
+     목표일까지 들어올 돈 − 나갈 돈 − 목표 금액
+     ───────────────────────────────────────  = 목표를 지키며 하루에 쓸 수 있는 돈
+                  목표일까지 남은 일수
+   =================================================================== */
+function 목표기준계산(자료, 목표) {
+  if (!목표) return null;
+
+  const 남은일수 = 남은일수계산(목표.날짜);
+  if (남은일수 <= 0) return { 지남: true, 목표: 목표 };
+
+  const 현재 = 오늘기준계산(자료);
+
+  // 목표일까지 들어올 돈 (정기 입금을 주기대로 펼쳐서 합산)
+  const 입금날들 = 입금날짜펼치기(자료.입금예정, 남은일수);
+  const 오늘글자 = 날짜글자(오늘0시());
+  const 목표글자 = 목표.날짜;
+  let 들어올돈 = 0;
+  Object.keys(입금날들).forEach(function (날) {
+    if (날 > 오늘글자 && 날 <= 목표글자) 들어올돈 += 입금날들[날];
+  });
+
+  // 목표일까지 나갈 고정지출 (매달 결제일마다 한 번)
+  let 고정나감 = 0;
+  (자료.고정지출 || []).forEach(function (f) {
+    const 결제일 = f.결제일 || 1;
+    for (let i = 1; i <= 남은일수; i++) {
+      const d = new Date(오늘0시().getTime() + i * 하루밀리초);
+      if (d.getDate() === 결제일) 고정나감 += f.금액;
+    }
+  });
+
+  // 목표일까지 잡힌 예정 지출
+  let 예정나감 = 0;
+  (자료.예정지출 || []).forEach(function (p) {
+    if (p.날짜 > 오늘글자 && p.날짜 <= 목표글자) 예정나감 += p.금액;
+  });
+
+  const 쓸수있는총액 = 현재.실제잔액 + 들어올돈 - 고정나감 - 예정나감 - 목표.금액;
+  const 하루 = Math.floor(쓸수있는총액 / 남은일수);
+  const 오늘남은 = 하루 - 현재.오늘쓴금액;
+
+  return {
+    지남: false,
+    목표: 목표,
+    남은일수: 남은일수,
+    들어올돈: 들어올돈,
+    고정나감: 고정나감,
+    예정나감: 예정나감,
+    실제잔액: 현재.실제잔액,
+    쓸수있는총액: 쓸수있는총액,
+    하루: 하루,
+    오늘쓴금액: 현재.오늘쓴금액,
+    오늘남은: 오늘남은,
+    // 지금 속도로 가면 목표를 넘길 수 있는지 (여유가 있으면 양수)
+    여유: 쓸수있는총액
+  };
+}
+
+
+/* ===================================================================
    앞으로의 잔액 변화 시뮬레이션
 
    ★ 왜 만들었나
@@ -557,18 +716,7 @@ function 잔액시뮬레이션(설정, 일수) {
   const 결과 = [];
   let 잔액 = 설정.잔액;
 
-  /* 입금이 들어오는 날짜들을 미리 만들어 둡니다.
-     여러 건을 등록할 수 있고, '매달 반복'인 건만 다음 달에도 들어옵니다. */
-  const 입금날들 = {};
-  (설정.입금예정 || []).forEach(function (p) {
-    const 첫 = 글자날짜(p.날짜);
-    const 반복수 = p.매달 ? 12 : 1;
-    for (let m = 0; m < 반복수; m++) {
-      const d = new Date(첫.getFullYear(), 첫.getMonth() + m, 첫.getDate());
-      const 글자 = 날짜글자(d);
-      입금날들[글자] = (입금날들[글자] || 0) + p.금액;
-    }
-  });
+  const 입금날들 = 입금날짜펼치기(설정.입금예정, 일수);
 
   // 예정 지출 / 추가 입금을 날짜별로 모아 둡니다
   const 예정날들 = {};

@@ -688,3 +688,47 @@ body {
   line-height: normal;
 }
 .try-link { display: block; text-align: center; text-decoration: none; margin-top: 10px; }
+
+/* ===================================================================
+   입금 주기 · 목표 모으기
+   =================================================================== */
+
+.cycle-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+}
+.cycle-label { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.cycle-num   { width: 62px; padding: 8px 10px; font-size: 13px; }
+.cycle-kind  { flex: 1; padding: 8px 10px; font-size: 13px; }
+
+/* 목표 결과는 '오늘의 금액'보다 작게 — 주인공을 뺏지 않도록 */
+.goal-result {
+  margin-bottom: 14px;
+  padding: 16px 14px 14px;
+  background: #f3f9f5;
+  border: 1px solid #ddeee3;
+  border-radius: 13px;
+  text-align: center;
+}
+.goal-label   { font-size: 12px; color: var(--muted); }
+.goal-amount  { font-size: 30px; font-weight: 800; color: var(--safe); margin: 5px 0 3px; letter-spacing: -1px; }
+.goal-amount--over { color: var(--danger); }
+.goal-hint    { font-size: 12px; color: var(--muted); }
+.goal-formula { margin-top: 9px; font-size: 10.5px; color: var(--muted); line-height: 1.5; }
+
+/* 목표까지 얼마나 왔는지 */
+.goal-bar {
+  height: 7px;
+  margin-top: 12px;
+  background: #e3efe8;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.goal-bar-fill {
+  height: 100%;
+  background: var(--safe);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}

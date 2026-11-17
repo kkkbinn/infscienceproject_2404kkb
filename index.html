@@ -6,7 +6,7 @@
   <!-- viewport: 휴대폰에서 화면 너비에 맞춰 표시되게 합니다 (5차시 배포 후 폰 접속용) -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>불규칙 수입 대학생을 위한 지출 관리 서비스</title>
-  <link rel="stylesheet" href="style.css?v=25">
+  <link rel="stylesheet" href="style.css?v=26">
 </head>
 <body>
 
@@ -39,6 +39,35 @@
         <p class="today-spent" id="today-spent"></p>
         <!-- 계산 과정을 한 줄로 보여 줍니다. 손 검산과 비교하기 위해서 (4차시) -->
         <p class="today-formula" id="today-formula"></p>
+      </section>
+
+      <!-- ============ 목표 금액 ============ -->
+      <!-- 위의 '오늘 쓸 수 있는 금액'은 그대로 두고, 목표용 금액을 따로 보여 줍니다 -->
+      <section class="block goal-block">
+        <h2 class="block-title">
+          목표 모으기
+          <span class="block-count" id="goal-count">0건</span>
+        </h2>
+
+        <div class="goal-result" id="goal-result" hidden>
+          <p class="goal-label" id="goal-label">목표를 지키려면 오늘</p>
+          <p class="goal-amount" id="goal-amount">―</p>
+          <p class="goal-hint" id="goal-hint"></p>
+          <div class="goal-bar"><div class="goal-bar-fill" id="goal-bar"></div></div>
+          <p class="goal-formula" id="goal-formula"></p>
+        </div>
+
+        <ul class="record-list" id="goal-list"></ul>
+
+        <form id="goal-form" class="fixed-form">
+          <input class="field-input fixed-name" type="text" id="goal-name"
+                 placeholder="노트북 사기" maxlength="20">
+          <input class="field-input fixed-amount" type="number" id="goal-amount-input"
+                 placeholder="500000" min="1" step="10000">
+          <input class="field-input fixed-day" type="date" id="goal-date">
+          <button class="fixed-add" type="submit">추가</button>
+        </form>
+        <p class="note">이날까지 이만큼 모으려면 하루에 얼마까지 써도 되는지 따로 계산해 줍니다.</p>
       </section>
 
       <!-- ============ 계산에 쓰는 값 입력 (4차시) ============ -->
@@ -84,10 +113,16 @@
           <button class="fixed-add" type="submit">추가</button>
         </form>
 
-        <label class="check-row">
-          <input type="checkbox" id="income-repeat" checked>
-          <span>매달 같은 날 반복해서 들어옵니다</span>
-        </label>
+        <!-- 격주 알바비, 두 달에 한 번 들어오는 돈도 적을 수 있게 -->
+        <div class="cycle-row">
+          <span class="cycle-label">얼마마다</span>
+          <input class="field-input cycle-num" type="number" id="income-every" value="1" min="1" max="99">
+          <select class="field-input cycle-kind" id="income-kind-cycle">
+            <option value="months">개월마다</option>
+            <option value="days">일마다</option>
+            <option value="none">한 번만</option>
+          </select>
+        </div>
 
         <p class="note" id="income-note">알바비·용돈·과외비처럼 들어오는 날이 다르면 각각 등록하세요. 가장 가까운 날이 기준이 됩니다.</p>
       </section>
@@ -176,9 +211,9 @@
   <!-- script를 body 끝에 두는 이유 : 위 HTML이 다 만들어진 뒤에 실행되어야
        app.js가 id로 자리를 찾을 수 있기 때문입니다 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-  <script src="supabase.js?v=25"></script>
-  <script src="storage.js?v=25"></script>
-  <script src="tour.js?v=25"></script>
-  <script src="app.js?v=25"></script>
+  <script src="supabase.js?v=26"></script>
+  <script src="storage.js?v=26"></script>
+  <script src="tour.js?v=26"></script>
+  <script src="app.js?v=26"></script>
 </body>
 </html>

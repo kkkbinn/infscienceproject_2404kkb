@@ -26,6 +26,8 @@ let 빠른입력목록 = [];      // 동료 피드백 ① (1511 이정현 / 1315
 let 추가입금목록 = [];      // 세뱃돈·환급 같은 꽁돈
 let 입금예정목록 = [];      // 동료 피드백 (2511 정영광 / 1310 박민석)
 let 입금표사용가능 = true;
+let 목표목록 = [];
+let 목표표사용가능 = true;
 let 고정지출표사용가능 = true;   // 표를 못 읽으면 false. 이때는 옛 합계 값을 그대로 씁니다.
 
 
@@ -253,6 +255,15 @@ function 고정지출연결() {
   });
 }
 
+/* 주기를 사람이 읽는 말로 */
+function 주기글(항목) {
+  const 종류 = 항목.주기종류 || "months";
+  const 값 = 항목.주기값 || 1;
+  if (종류 === "none") return "한 번만";
+  if (종류 === "days") return 값 === 7 ? "매주" : (값 === 14 ? "격주" : 값 + "일마다");
+  return 값 === 1 ? "매달" : 값 + "개월마다";
+}
+
 /* ---------------- 입금 예정 (2511 정영광 / 1310 박민석) ---------------- */
 function 입금예정그리기() {
   const 목록칸 = document.getElementById("income-list");
@@ -302,7 +313,7 @@ function 입금예정그리기() {
     li.innerHTML = `
       <div class="record-left">
         <span class="record-category">${항목.종류}${기준인가 ? " · 기준" : ""}</span>
-        <span class="record-date">${항목.날짜}${항목.매달 ? " · 매달 반복" : ""}${지남 ? " · 날짜 지남" : ""}</span>
+        <span class="record-date">${항목.날짜} · ${주기글(항목)}${지남 ? " · 날짜 지남" : ""}</span>
       </div>
       <span class="record-amount record-amount--in">+${원(항목.금액)}</span>
     `;
@@ -334,18 +345,152 @@ function 입금예정연결() {
     const 종류 = document.getElementById("income-kind").value;
     const 금액 = Number(document.getElementById("income-amount").value);
     const 날짜 = document.getElementById("income-date").value;
-    const 매달 = document.getElementById("income-repeat").checked;
+    const 주기종류 = document.getElementById("income-kind-cycle").value;
+    const 주기값 = Math.max(Number(document.getElementById("income-every").value) || 1, 1);
     if (!(금액 > 0) || !날짜) { 알림("금액과 날짜를 넣어 주세요."); return; }
 
-    const id = await 저장소.입금예정추가(종류, 금액, 날짜, 매달);
+    const id = await 저장소.입금예정추가(종류, 금액, 날짜, 주기종류, 주기값);
     if (id === null) { 알림("저장하지 못했어요."); return; }
 
-    입금예정목록.push({ 번호: id, 종류: 종류, 금액: 금액, 날짜: 날짜, 매달: 매달 });
+    입금예정목록.push({ 번호: id, 종류: 종류, 금액: 금액, 날짜: 날짜,
+                      주기종류: 주기종류, 주기값: 주기값 });
     입금예정목록.sort(function (a, b) { return a.날짜 < b.날짜 ? -1 : 1; });
     document.getElementById("income-amount").value = "";
     알림(종류 + " 예정 추가했어요");
     입금예정그리기();
     다시계산(true);
+  });
+}
+
+
+/* ---------------- 목표 모으기 ----------------
+   '오늘 쓸 수 있는 금액'은 다음 입금일까지 버티는 것만 생각한다.
+   목표는 그날까지 일정 금액을 남겨 둬야 하므로 더 빡빡하다.
+   그래서 위의 금액은 그대로 두고 여기에 따로 보여 준다. */
+function 목표그리기() {
+  const 목록칸 = document.getElementById("goal-list");
+  const 개수칸 = document.getElementById("goal-count");
+  const 결과칸 = document.getElementById("goal-result");
+  if (!목록칸) return;
+
+  목록칸.innerHTML = "";
+
+  if (!목표표사용가능) {
+    개수칸.textContent = "―";
+    결과칸.hidden = true;
+    목록칸.innerHTML = '<li class="record-empty">목표 표를 아직 만들지 않았습니다.</li>';
+    return;
+  }
+
+  개수칸.textContent = 목표목록.length + "건";
+
+  if (목표목록.length === 0) {
+    결과칸.hidden = true;
+    목록칸.innerHTML = '<li class="record-empty">등록한 목표가 없습니다.</li>';
+    return;
+  }
+
+  // 날짜가 가장 가까운 목표를 기준으로 보여 줍니다
+  const 자료 = {
+    내돈: 내돈, 지출목록: 지출목록, 추가입금: 추가입금목록,
+    고정지출: 고정지출표사용가능 ? 고정지출목록 : [],
+    예정지출: 예정지출목록, 입금예정: 입금예정목록
+  };
+  const 가까운 = 목표목록.filter(function (g) { return 남은일수계산(g.날짜) > 0; })[0] || 목표목록[0];
+  const 결과 = 목표기준계산(자료, 가까운);
+
+  const 금액칸 = document.getElementById("goal-amount");
+  const 라벨칸 = document.getElementById("goal-label");
+  const 안내칸 = document.getElementById("goal-hint");
+  const 식칸 = document.getElementById("goal-formula");
+  const 막대 = document.getElementById("goal-bar");
+  결과칸.hidden = false;
+
+  if (결과.지남) {
+    라벨칸.textContent = 가까운.이름;
+    금액칸.textContent = "―";
+    금액칸.classList.remove("goal-amount--over");
+    안내칸.textContent = "목표 날짜가 지났습니다. 새 목표를 등록해 주세요.";
+    식칸.textContent = "";
+    막대.style.width = "0%";
+    return;
+  }
+
+  라벨칸.textContent = "「" + 가까운.이름 + "」을 지키려면 오늘";
+
+  if (결과.하루 < 0) {
+    // 아무것도 안 써도 목표에 못 미치는 경우
+    금액칸.textContent = "한 푼도 어려워요";
+    금액칸.classList.add("goal-amount--over");
+    안내칸.textContent = "지금 계획으로는 " + 원(-결과.쓸수있는총액) + "이 모자랍니다";
+  } else {
+    금액칸.textContent = 원(Math.max(결과.오늘남은, 0));
+    금액칸.classList.toggle("goal-amount--over", 결과.오늘남은 < 0);
+    안내칸.textContent = 결과.오늘남은 >= 0
+      ? "하루 " + 원(결과.하루) + " 기준 · D-" + 결과.남은일수
+      : "오늘은 이미 " + 원(-결과.오늘남은) + " 더 썼습니다";
+  }
+
+  // 목표까지 얼마나 왔는지
+  const 비율 = Math.max(Math.min(Math.round((결과.실제잔액 / 가까운.금액) * 100), 100), 0);
+  막대.style.width = 비율 + "%";
+
+  식칸.textContent = "지금 " + 원(결과.실제잔액) + " + 들어올 " + 원(결과.들어올돈)
+                   + " − 나갈 " + 원(결과.고정나감 + 결과.예정나감)
+                   + " − 목표 " + 원(가까운.금액) + " = " + 원(결과.쓸수있는총액)
+                   + " ÷ " + 결과.남은일수 + "일";
+
+  // 목록
+  목표목록.forEach(function (항목) {
+    const 남은 = 남은일수계산(항목.날짜);
+    const li = document.createElement("li");
+    li.className = "record-item";
+    li.innerHTML = `
+      <div class="record-left">
+        <span class="record-category">${항목.이름}${항목 === 가까운 ? " · 기준" : ""}</span>
+        <span class="record-date">${항목.날짜}${남은 > 0 ? " · D-" + 남은 : " · 지남"}</span>
+      </div>
+      <span class="record-amount">${원(항목.금액)}</span>
+    `;
+    const 삭제 = document.createElement("button");
+    삭제.className = "record-delete";
+    삭제.type = "button";
+    삭제.textContent = "삭제";
+    삭제.setAttribute("aria-label", 항목.이름 + " 목표 삭제");
+    삭제.addEventListener("click", async function () {
+      if (!confirm("「" + 항목.이름 + "」 목표를 지울까요?")) return;
+      if (!(await 저장소.목표삭제(항목.번호))) { 알림("지우지 못했어요."); return; }
+      목표목록 = 목표목록.filter(function (x) { return x.번호 !== 항목.번호; });
+      목표그리기();
+    });
+    li.appendChild(삭제);
+    목록칸.appendChild(li);
+  });
+}
+
+function 목표연결() {
+  const 폼 = document.getElementById("goal-form");
+  if (!폼) return;
+  const d = new Date(); d.setMonth(d.getMonth() + 3);
+  document.getElementById("goal-date").value = 날짜글자(d);
+
+  폼.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const 이름 = document.getElementById("goal-name").value.trim();
+    const 금액 = Number(document.getElementById("goal-amount-input").value);
+    const 날짜 = document.getElementById("goal-date").value;
+    if (!이름 || !(금액 > 0) || !날짜) { 알림("이름·금액·날짜를 모두 넣어 주세요."); return; }
+    if (남은일수계산(날짜) <= 0) { 알림("목표 날짜를 내일 이후로 골라 주세요."); return; }
+
+    const id = await 저장소.목표추가(이름, 금액, 날짜);
+    if (id === null) { 알림("저장하지 못했어요."); return; }
+
+    목표목록.push({ 번호: id, 이름: 이름, 금액: 금액, 날짜: 날짜 });
+    목표목록.sort(function (a, b) { return a.날짜 < b.날짜 ? -1 : 1; });
+    document.getElementById("goal-name").value = "";
+    document.getElementById("goal-amount-input").value = "";
+    알림(이름 + " 목표 추가했어요");
+    목표그리기();
   });
 }
 
@@ -537,6 +682,7 @@ function 빠른입력그리기() {
       알림(항목.이름 + " " + 원(항목.금액) + " 기록했어요");
       다시계산(false);
       await 카테고리그리기();
+      목표그리기();
     });
     목록칸.appendChild(button);
   });
@@ -660,6 +806,10 @@ async function 입력연결() {
   예정지출목록 = (await 저장소.예정지출읽기()) || [];
   추가입금목록 = (await 저장소.추가입금읽기()) || [];
 
+  const 목표읽은것 = await 저장소.목표읽기();
+  목표표사용가능 = 목표읽은것 !== null;
+  목표목록 = 목표읽은것 || [];
+
   const 입금읽은것 = await 저장소.입금예정읽기();
   입금표사용가능 = 입금읽은것 !== null;
   입금예정목록 = 입금읽은것 || [];
@@ -679,6 +829,7 @@ async function 입력연결() {
   await 입력연결();
   고정지출연결();
   고정지출그리기();
+  목표연결();
   입금예정연결();
   입금예정그리기();
   예정지출연결();
@@ -691,4 +842,5 @@ async function 입력연결() {
   다시계산(false);              // 화면을 열 때는 저장하지 않습니다
   await 카테고리그리기();
   빠른입력그리기();
+  목표그리기();
 })();
