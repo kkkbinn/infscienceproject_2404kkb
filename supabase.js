@@ -49,8 +49,17 @@ function 사용자띠그리기(user) {
   if (!띠) return;
   띠.innerHTML = `
     <span class="user-bar-email">${user.email}</span>
+    <button class="user-bar-help" type="button" id="help-btn">사용법</button>
     <button class="user-bar-logout" type="button" id="logout-btn">로그아웃</button>
   `;
+
+  // 안내를 언제든 다시 볼 수 있게 (tour.js 가 있는 화면에서만)
+  const 도움말 = document.getElementById("help-btn");
+  if (typeof 안내 !== "undefined") {
+    도움말.addEventListener("click", function () { 안내.다시보기(); });
+  } else {
+    도움말.hidden = true;
+  }
   document.getElementById("logout-btn").addEventListener("click", async function () {
     await sb.auth.signOut();
     location.href = "login.html";

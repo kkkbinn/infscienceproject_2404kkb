@@ -571,3 +571,86 @@ body {
 
 /* 들어온 돈은 초록 + 앞에 플러스 */
 .record-amount--in { color: var(--safe); }
+
+/* ===================================================================
+   처음 사용 안내 (게임 튜토리얼 같은 안내)
+   =================================================================== */
+
+.tour-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+}
+
+/* 아주 큰 박스그림자로 이 요소 바깥을 전부 어둡게 만듭니다.
+   그러면 이 자리만 구멍이 뚫린 것처럼 밝게 남습니다. */
+.tour-spot {
+  position: fixed;
+  border-radius: 14px;
+  box-shadow: 0 0 0 9999px rgba(16, 18, 27, 0.72);
+  border: 2px solid var(--point);
+  pointer-events: none;
+  transition: top 0.25s ease, left 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+
+.tour-box {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 36px);
+  max-width: 380px;
+  padding: 18px 20px 16px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  transition: top 0.25s ease;
+}
+
+.tour-step  { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.tour-title { font-size: 17px; font-weight: 800; margin-bottom: 7px; }
+.tour-desc  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+.tour-btns {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 16px;
+}
+.tour-skip {
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tour-next {
+  flex: 1;
+  padding: 12px;
+  background: var(--point);
+  color: #fff;
+  border: none;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+.tour-next:active { opacity: 0.85; }
+
+/* 상단 띠의 '사용법' 버튼 */
+.user-bar-help {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  margin-left: auto;
+  margin-right: 6px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 11px;
+  font-family: inherit;
+  color: var(--point);
+  cursor: pointer;
+}
+.user-bar-help:hover { border-color: var(--point); }
