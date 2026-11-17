@@ -184,6 +184,35 @@ const 저장소 = (function () {
       return true;
     },
 
+    /* ---------------- 추가 입금 (꽁돈) ----------------
+       세뱃돈·환급·중고거래처럼 예정에 없던 돈. 지출과 대칭으로 다룬다. */
+
+    추가입금읽기: async function () {
+      const { data, error } = await sb
+        .from("extra_incomes")
+        .select("id, amount, memo, received_on, created_at")
+        .order("received_on", { ascending: true });
+      if (error) { console.error("추가 입금 불러오기 실패", error); return null; }
+      return data.map(function (r) {
+        return { 번호: r.id, 금액: r.amount, 메모: r.memo || "", 날짜: r.received_on, 기록시각: r.created_at };
+      });
+    },
+
+    추가입금추가: async function (금액, 날짜, 메모) {
+      const { data, error } = await sb
+        .from("extra_incomes")
+        .insert({ amount: 금액, received_on: 날짜, memo: 메모 })
+        .select("id").single();
+      if (error) { console.error("추가 입금 저장 실패", error); return null; }
+      return data.id;
+    },
+
+    추가입금삭제: async function (번호) {
+      const { error } = await sb.from("extra_incomes").delete().eq("id", 번호);
+      if (error) { console.error("추가 입금 삭제 실패", error); return false; }
+      return true;
+    },
+
     /* ---------------- 예정된 지출 (동료 피드백 ②) ----------------
        2616 최유빈 : 선물값처럼 한 번만 나갈 돈을 등록하면
        그날까지 매일 조금씩 미리 떼어 두면 좋겠다는 의견.
@@ -394,6 +423,77 @@ function 기간내예정지출(목록, 입금일글자) {
     if (d >= 오늘 && d <= 입금일) 합 += 항목.금액;
   });
   return 합;
+}
+
+/* ===================================================================
+   앞으로의 잔액 변화 시뮬레이션
+
+   ★ 왜 만들었나
+     전에는 '잔액 ÷ 하루 평균 지출' 로 0원이 되는 날을 구했다.
+     그런데 이 계산은 다음 입금일에 돈이 들어온다는 사실을 빼먹는다.
+     그래서 매달 꼬박꼬박 돈이 들어오는 사람에게도
+     "2028년 1월 28일에 0원이 됩니다" 같은 엉뚱한 날짜가 나왔다.
+
+     실제로는 수입이 반복되므로, 하루 지출이 수입보다 적으면
+     잔액은 0이 되지 않고 오히려 쌓인다.
+     그래서 날짜를 하루씩 따라가며 들어오고 나가는 돈을 모두 반영한다.
+
+   하루마다 반영하는 것
+     · 최근 7일 하루 평균만큼 줄어든다
+     · 입금 예정일에 수입이 들어온다 (그 뒤로는 매달 같은 날 반복)
+     · 고정지출은 매달 결제일에 빠진다 (결제일을 안 적었으면 매달 1일)
+     · 예정 지출과 추가 입금은 그 날짜에 한 번 반영된다
+   =================================================================== */
+function 잔액시뮬레이션(설정, 일수) {
+  const 시작 = 오늘0시();
+  const 결과 = [];
+  let 잔액 = 설정.잔액;
+
+  // 입금일이 들어오는 날짜들을 미리 만들어 둡니다 (매달 같은 날 반복)
+  const 입금날들 = {};
+  if (설정.입금일 && 설정.수입금액 > 0) {
+    const 첫입금 = 글자날짜(설정.입금일);
+    for (let m = 0; m < 12; m++) {
+      const d = new Date(첫입금.getFullYear(), 첫입금.getMonth() + m, 첫입금.getDate());
+      입금날들[날짜글자(d)] = 설정.수입금액;
+    }
+  }
+
+  // 예정 지출 / 추가 입금을 날짜별로 모아 둡니다
+  const 예정날들 = {};
+  (설정.예정지출 || []).forEach(function (p) {
+    예정날들[p.날짜] = (예정날들[p.날짜] || 0) + p.금액;
+  });
+  const 꽁돈날들 = {};
+  (설정.추가입금 || []).forEach(function (p) {
+    꽁돈날들[p.날짜] = (꽁돈날들[p.날짜] || 0) + p.금액;
+  });
+
+  let 영원일 = null;
+
+  for (let i = 0; i <= 일수; i++) {
+    const 날 = new Date(시작.getTime() + i * 하루밀리초);
+    const 글자 = 날짜글자(날);
+
+    if (i > 0) {
+      잔액 -= 설정.하루평균;                     // 매일 쓰는 돈
+
+      // 고정지출 : 매달 결제일에 한 번
+      (설정.고정지출 || []).forEach(function (f) {
+        const 결제일 = f.결제일 || 1;
+        if (날.getDate() === 결제일) 잔액 -= f.금액;
+      });
+
+      if (예정날들[글자]) 잔액 -= 예정날들[글자];   // 예정된 지출
+      if (꽁돈날들[글자]) 잔액 += 꽁돈날들[글자];   // 추가 입금
+      if (입금날들[글자]) 잔액 += 입금날들[글자];   // 정기 수입
+    }
+
+    if (영원일 === null && 잔액 <= 0) 영원일 = i;
+    결과.push({ 날: i, 날짜: 글자, 잔액: 잔액 });
+  }
+
+  return { 점들: 결과, 영원일: 영원일, 끝잔액: 잔액 };
 }
 
 // 소진율에 따른 막대 색 (빠듯한 항목은 색으로 구분)

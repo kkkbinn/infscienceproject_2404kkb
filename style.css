@@ -537,3 +537,37 @@ body {
 #quick-manage { margin-top: 10px; }
 /* 날짜 입력칸이 좁아 보이지 않게 */
 .fixed-form input[type="date"] { flex: 1.8; }
+
+/* ===================================================================
+   지출 / 입금 전환 · 추가 입금 표시
+   =================================================================== */
+
+.mode-switch {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 4px;
+  background: #f2f4f8;
+  border-radius: 12px;
+}
+.mode-btn {
+  flex: 1;
+  padding: 9px 0;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--muted);
+  cursor: pointer;
+}
+/* 고른 쪽만 흰 알약으로 떠오르게 */
+.mode-btn--on {
+  background: #fff;
+  color: var(--point);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* 들어온 돈은 초록 + 앞에 플러스 */
+.record-amount--in { color: var(--safe); }

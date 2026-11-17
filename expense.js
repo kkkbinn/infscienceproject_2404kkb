@@ -13,7 +13,9 @@ let 빠른입력목록 = [];
 /* ★ 7차시: 기록을 Supabase 에서 불러옵니다.
    번호(id)는 데이터베이스가 붙여 주므로 여기서 셀 필요가 없어졌습니다. */
 let 지출목록 = [];
-let 내돈 = null;          // 오늘 한도를 계산하려면 잔액·입금일·고정지출이 필요합니다
+let 내돈 = null;
+let 추가입금목록 = [];
+let 모드 = "지출";          // "지출" 또는 "입금"           // 오늘 한도를 계산하려면 잔액·입금일·고정지출이 필요합니다
 
 
 /* -------------------------------------------------------------------
@@ -64,27 +66,39 @@ function 목록그리기() {
   const 요약칸 = document.getElementById("record-summary");
   목록칸.innerHTML = "";
 
-  if (지출목록.length === 0) {
-    목록칸.innerHTML = `<li class="record-empty">아직 기록한 지출이 없습니다.</li>`;
+  /* 지출과 추가 입금을 한 목록에 섞어서 보여 줍니다.
+     종류를 함께 들고 다녀야 삭제할 때 어느 표에서 지울지 알 수 있습니다. */
+  const 전체 = []
+    .concat(지출목록.map(function (x) { return Object.assign({ 종류: "지출" }, x); }))
+    .concat(추가입금목록.map(function (x) { return Object.assign({ 종류: "입금" }, x); }));
+
+  if (전체.length === 0) {
+    목록칸.innerHTML = `<li class="record-empty">아직 기록한 내역이 없습니다.</li>`;
     요약칸.textContent = "0건";
     return;
   }
 
-  let 합계 = 0;
-  지출목록.forEach(function (항목) { 합계 += 항목.금액; });
-  요약칸.textContent = 지출목록.length + "건 · " + 원(합계);
+  let 쓴돈 = 0, 받은돈 = 0;
+  지출목록.forEach(function (항목) { 쓴돈 += 항목.금액; });
+  추가입금목록.forEach(function (항목) { 받은돈 += 항목.금액; });
+  요약칸.textContent = 받은돈 > 0
+    ? "지출 " + 원(쓴돈) + " · 입금 " + 원(받은돈)
+    : 전체.length + "건 · " + 원(쓴돈);
 
-  // slice().reverse() = 원본은 그대로 두고 순서만 뒤집기 (최근 것이 위로)
-  지출목록.slice().reverse().forEach(function (항목) {
+  // 날짜순으로 정렬한 뒤 최근 것이 위로 오게 뒤집습니다
+  전체.sort(function (a, b) { return a.날짜 < b.날짜 ? -1 : (a.날짜 > b.날짜 ? 1 : a.번호 - b.번호); });
+
+  전체.slice().reverse().forEach(function (항목) {
+    const 입금 = 항목.종류 === "입금";
     const li = document.createElement("li");
     li.className = "record-item";
     li.innerHTML = `
       <div class="record-left">
-        <span class="record-category">${항목.카테고리}</span>
+        <span class="record-category">${입금 ? "추가 입금" : 항목.카테고리}</span>
         <span class="record-memo">${항목.메모 || ""}</span>
         <span class="record-date">${항목.날짜}</span>
       </div>
-      <span class="record-amount">${원(항목.금액)}</span>
+      <span class="record-amount${입금 ? " record-amount--in" : ""}">${입금 ? "+" : ""}${원(항목.금액)}</span>
     `;
 
     // 삭제 버튼은 따로 만듭니다. 버튼에 "눌리면 이 일을 해라"를 붙이려면
@@ -93,12 +107,13 @@ function 목록그리기() {
     삭제버튼.className = "record-delete";
     삭제버튼.type = "button";
     삭제버튼.textContent = "삭제";
-    삭제버튼.setAttribute("aria-label", 항목.카테고리 + " " + 원(항목.금액) + " 기록 삭제");
+    const 이름 = 입금 ? "추가 입금" : 항목.카테고리;
+    삭제버튼.setAttribute("aria-label", 이름 + " " + 원(항목.금액) + " 기록 삭제");
     삭제버튼.addEventListener("click", function () {
       // 잘못 눌러 기록이 사라지지 않도록 한 번 확인합니다
-      const 설명 = 항목.카테고리 + " " + 원(항목.금액) + (항목.메모 ? " (" + 항목.메모 + ")" : "");
+      const 설명 = 이름 + " " + 원(항목.금액) + (항목.메모 ? " (" + 항목.메모 + ")" : "");
       if (!confirm(설명 + " 기록을 지울까요?")) return;
-      지출삭제(항목.번호);
+      if (입금) 입금삭제(항목.번호); else 지출삭제(항목.번호);
     });
     li.appendChild(삭제버튼);
 
@@ -157,6 +172,23 @@ async function 지출추가(금액, 카테고리, 날짜, 메모) {
   한도띠그리기();          // 기록한 즉시 오늘 한도가 줄어드는 것을 보여 줍니다
 }
 
+async function 입금추가(금액, 날짜, 메모) {
+  const id = await 저장소.추가입금추가(금액, 날짜, 메모);
+  if (id === null) { 저장오류(true); return; }
+  저장오류(false);
+  추가입금목록.push({ 번호: id, 금액: 금액, 날짜: 날짜, 메모: 메모, 기록시각: new Date().toISOString() });
+  목록그리기();
+  한도띠그리기();
+}
+
+async function 입금삭제(번호) {
+  if (!(await 저장소.추가입금삭제(번호))) { 저장오류(true); return; }
+  저장오류(false);
+  추가입금목록 = 추가입금목록.filter(function (항목) { return 항목.번호 !== 번호; });
+  목록그리기();
+  한도띠그리기();
+}
+
 /* 화면은 최근 것이 위로 뒤집혀 있어서 '몇 번째 줄'로 지우면
    엉뚱한 기록이 지워집니다. 그래서 고유 번호(데이터베이스 id)로 찾아 지웁니다. */
 async function 지출삭제(번호) {
@@ -198,13 +230,35 @@ function 폼연결() {
 
     const 저장버튼 = document.getElementById("save-btn");
     저장버튼.disabled = true;
-    await 지출추가(금액, 카테고리, 날짜, 메모);
+    if (모드 === "입금") await 입금추가(금액, 날짜, 메모);
+    else await 지출추가(금액, 카테고리, 날짜, 메모);
     저장버튼.disabled = false;
 
     // 다음 입력을 위해 금액과 메모만 비웁니다
     document.getElementById("amount").value = "";
     document.getElementById("memo").value = "";
     document.getElementById("amount").focus();
+  });
+}
+
+
+/* 지출 / 입금 전환 */
+function 모드연결() {
+  const 칸 = document.getElementById("mode-switch");
+  if (!칸) return;
+  칸.querySelectorAll(".mode-btn").forEach(function (b) {
+    b.addEventListener("click", function () {
+      모드 = b.dataset.mode;
+      칸.querySelectorAll(".mode-btn").forEach(function (x) {
+        x.classList.toggle("mode-btn--on", x === b);
+      });
+      // 입금에는 카테고리가 없습니다
+      document.getElementById("category-field").hidden = (모드 === "입금");
+      document.getElementById("save-btn").textContent = (모드 === "입금") ? "입금 저장" : "저장";
+      document.getElementById("memo").placeholder = (모드 === "입금")
+        ? "세뱃돈, 중고거래, 환급 …" : "학식, 친구 생일 모임 …";
+      document.getElementById("amount").focus();
+    });
   });
 }
 
@@ -222,8 +276,10 @@ function 폼연결() {
   빠른입력그리기();
   document.getElementById("date").value = 날짜글자(오늘0시());
   폼연결();
+  모드연결();
 
   지출목록 = await 저장소.지출목록읽기();   // Supabase 에서 불러오기
+  추가입금목록 = (await 저장소.추가입금읽기()) || [];
   내돈 = await 저장소.내돈정보읽기();
   목록그리기();
   한도띠그리기();
